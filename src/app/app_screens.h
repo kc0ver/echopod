@@ -29,7 +29,11 @@
 #include "ui/toast.h"
 
 enum {
+#ifdef ECHO_READER_DEMO
+    HOME_ITEM_COUNT = 7,
+#else
     HOME_ITEM_COUNT = 6,
+#endif
     SHELF_COUNT = 2,
     MUSIC_ITEM_COUNT = 9,
     DIAGNOSTICS_ITEM_COUNT = 23,

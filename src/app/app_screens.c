@@ -241,6 +241,9 @@ static void build_home(AppScreens *screens, AppScreensContext context)
         app_screens_open_item(i18n_text(STR_MENU_NOW_PLAYING), &screens->now_playing.screen);
     screens->home_items[5].shown = player_has_track;
     screens->home_items[5].shown_context = context.player;
+#ifdef ECHO_READER_DEMO
+    screens->home_items[6] = app_screens_open_item("Reader (demo)", &screens->reader.screen);
+#endif
     home_art_init(&screens->home_art, context.covers, context.store, context.player, theme);
     screens->home_art.notice = hal_storage_card_ready() ? NULL : i18n_text(STR_MENU_NO_CARD);
     MenuConfig home = {.title = "EchoPod",
