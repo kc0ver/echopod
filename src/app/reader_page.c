@@ -13,11 +13,65 @@ static bool breakable(uint32_t codepoint)
     return codepoint == ' ' || codepoint == '-';
 }
 
+static bool never_starts_a_line(uint32_t codepoint)
+{
+    switch (codepoint) {
+    case ',':
+    case '.':
+    case ';':
+    case ':':
+    case '!':
+    case '?':
+    case ')':
+    case ']':
+    case '}':
+    case 0x3001:
+    case 0x3002:
+    case 0x300B:
+    case 0x300D:
+    case 0x300F:
+    case 0x3011:
+    case 0x3015:
+    case 0x3017:
+    case 0xFF01:
+    case 0xFF09:
+    case 0xFF0C:
+    case 0xFF1A:
+    case 0xFF1B:
+    case 0xFF1F:
+    case 0x2026:
+        return true;
+    default:
+        return false;
+    }
+}
+
+static bool never_ends_a_line(uint32_t codepoint)
+{
+    switch (codepoint) {
+    case '(':
+    case '[':
+    case '{':
+    case 0x300A:
+    case 0x300C:
+    case 0x300E:
+    case 0x3010:
+    case 0x3014:
+    case 0x3016:
+    case 0xFF08:
+        return true;
+    default:
+        return false;
+    }
+}
+
 static size_t line_bytes(const Font *font, const char *text, size_t length, int width)
 {
     int used = 0;
     size_t index = 0;
     size_t break_at = 0;
+    size_t previous_start = 0;
+    uint32_t previous = 0;
     while (index < length) {
         const char *cursor = text + index;
         uint32_t codepoint = utf8_next(&cursor);
@@ -34,9 +88,17 @@ static size_t line_bytes(const Font *font, const char *text, size_t length, int 
         }
         int advance = advance_of(font, codepoint);
         if (used + advance > width && index > 0) {
+            if (never_starts_a_line(codepoint)) {
+                return index + step;
+            }
+            if (never_ends_a_line(previous) && previous_start > 0) {
+                return previous_start;
+            }
             return break_at > 0 ? break_at : index;
         }
         used += advance;
+        previous = codepoint;
+        previous_start = index;
         index += step;
         if (breakable(codepoint)) {
             break_at = index;

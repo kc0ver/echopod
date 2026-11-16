@@ -46,6 +46,16 @@ static void a_character_wider_than_the_line_still_advances(void)
     CHECK_EQUAL(3, reader_line_bytes(&TEST_FONT, "\xE4\xB8\x80", 3, 5));
 }
 
+static void a_closing_punctuation_hangs_on_the_line(void)
+{
+    CHECK_EQUAL(9, reader_line_bytes(&TEST_FONT, "\xE4\xB8\x80\xE4\xB8\x80\xE3\x80\x82", 9, 20));
+}
+
+static void an_opening_punctuation_moves_to_the_next_line(void)
+{
+    CHECK_EQUAL(3, reader_line_bytes(&TEST_FONT, "\xE4\xB8\x80\xEF\xBC\x88\xE4\xB8\x80", 9, 15));
+}
+
 static void a_page_holds_the_requested_lines(void)
 {
     const char *text = "A\nB\nC\nD\n";
@@ -96,6 +106,8 @@ int main(void)
         TEST_CASE(a_newline_ends_the_line),
         TEST_CASE(a_carriage_return_joins_a_newline),
         TEST_CASE(a_character_wider_than_the_line_still_advances),
+        TEST_CASE(a_closing_punctuation_hangs_on_the_line),
+        TEST_CASE(an_opening_punctuation_moves_to_the_next_line),
         TEST_CASE(a_page_holds_the_requested_lines),
         TEST_CASE(the_last_page_stops_at_the_end),
         TEST_CASE(an_offset_past_the_end_is_rejected),
