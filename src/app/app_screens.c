@@ -25,6 +25,18 @@ enum {
     START_HOME_ONLY = -1
 };
 
+#ifdef ECHO_READER_DEMO
+static const char READER_DEMO_TEXT[] =
+    "第一页\n\n"
+    "这是一段用来检查排版的示例文字。屏幕一次放不下多少字，所以一页大约只有一百九十个汉字，"
+    "翻页会比较频繁。按播放键可以切换到十二像素字号，一页能多放一倍内容，但字会明显变小。\n\n"
+    "中文换行是按字断开的，英文单词会尽量保持完整，只有单词比整行还长时才会强制拆开。"
+    "行末的空格会被丢弃，段落之间的空行会保留。\n\n"
+    "混合排版测试：English words, numbers 1234567890, punctuation—including a dash, and a long "
+    "word pneumonoultramicroscopicsilicovolcanoconiosis.\n\n"
+    "音量下键翻到下一页，音量上键回到上一页，播放键切换字号，返回键退出阅读器。";
+#endif
+
 static const int8_t START_ENTRIES[START_SCREEN_COUNT] = {
     [START_MAIN_MENU] = START_HOME_ONLY,
     [START_NOW_PLAYING] = START_HOME_ONLY,
@@ -265,6 +277,9 @@ Screen *app_screens_init(AppScreens *screens, AppScreensContext context)
     message_screen_init(&screens->no_library, no_library);
     bluetooth_screen_init(&screens->bluetooth, context.bluetooth, theme);
     now_playing_screen_init(&screens->now_playing, now_playing);
+#ifdef ECHO_READER_DEMO
+    reader_screen_init(&screens->reader, theme, READER_DEMO_TEXT, sizeof READER_DEMO_TEXT - 1);
+#endif
     build_music(screens, context);
     build_settings(screens, context);
     diagnostics_menu_build(screens, context.options, theme);

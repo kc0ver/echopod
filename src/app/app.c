@@ -470,14 +470,30 @@ static bool slide_running(void)
     return app.slide.active && !slide_finished(&app.slide, app.now_ms);
 }
 
+#ifdef ECHO_READER_DEMO
+static bool opens_reader(KeyEvent event)
+{
+    return event.key == KEY_PLAY && event.gesture == KEY_GESTURE_LONG_PRESS &&
+           top_screen() == &app.screens.home.screen;
+}
+#endif
+
 static void dispatch_to_screen(KeyEvent event, uint32_t now_ms)
 {
     Screen *screen = top_screen();
     int depth_before = screen_stack_depth(&app.stack);
-    ScreenAction action = opens_now_playing(event) ? now_playing_action()
-                          : opens_settings(event)
-                              ? screen_action_push(&app.screens.settings.menu.screen)
-                              : screen->handle_key(screen->context, event, now_ms);
+    ScreenAction action;
+    if (opens_now_playing(event)) {
+        action = now_playing_action();
+    } else if (opens_settings(event)) {
+        action = screen_action_push(&app.screens.settings.menu.screen);
+#ifdef ECHO_READER_DEMO
+    } else if (opens_reader(event)) {
+        action = screen_action_push(&app.screens.reader.screen);
+#endif
+    } else {
+        action = screen->handle_key(screen->context, event, now_ms);
+    }
     if (screen_stack_apply(&app.stack, action, now_ms)) {
         use_screen_key_behaviors();
         start_slide(screen, depth_before, hal_clock_milliseconds());

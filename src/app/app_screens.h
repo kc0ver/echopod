@@ -16,6 +16,9 @@
 #include "screens/date_time_screen.h"
 #include "screens/equalizer_screen.h"
 #include "screens/now_playing_screen.h"
+#ifdef ECHO_READER_DEMO
+#include "screens/reader_screen.h"
+#endif
 #include "screens/test_pattern_screen.h"
 #include "screens/up_next_screen.h"
 #include "settings/settings.h"
@@ -80,6 +83,9 @@ typedef struct AppScreens {
     EqualizerScreen equalizer;
     DateTimeScreen date_time;
     FoldersScreen folders;
+#ifdef ECHO_READER_DEMO
+    ReaderScreen reader;
+#endif
     ClockOption clock;
     Core1Option core1;
     Core1AccelOption core1_accel;
