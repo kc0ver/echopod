@@ -10,6 +10,7 @@ typedef struct ReaderLayout {
     const Font *font;
     int width;
     int lines;
+    int indent;
 } ReaderLayout;
 
 typedef struct ReaderPage {
@@ -18,7 +19,8 @@ typedef struct ReaderPage {
     int lines;
 } ReaderPage;
 
-size_t reader_line_bytes(const Font *font, const char *text, size_t length, int width);
+bool reader_starts_paragraph(const char *text, uint32_t offset);
+size_t reader_line_bytes(const Font *font, const char *text, size_t length, int width, int indent);
 bool reader_page_next(const char *text, size_t length, uint32_t offset, ReaderLayout layout,
                       ReaderPage *page);
 uint32_t reader_page_previous(const char *text, size_t length, uint32_t offset,

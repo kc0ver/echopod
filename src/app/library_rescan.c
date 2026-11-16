@@ -2,6 +2,9 @@
 
 #include <stddef.h>
 
+#ifdef ECHO_READER_DEMO
+#include "app/reader_book.h"
+#endif
 #include "card_files.h"
 #include "core/i18n.h"
 #include "core/string_builder.h"
@@ -34,6 +37,83 @@ enum {
 
 static uint32_t spent[TIME_SLOTS * 2];
 static uint32_t pass;
+
+#ifdef ECHO_READER_DEMO
+static uint16_t book_count;
+
+static bool book_suffix(const char *name)
+{
+    uint32_t length = 0;
+    while (name[length] != '\0') {
+        length++;
+    }
+    if (length < 5) {
+        return false;
+    }
+    const char *dot = name + length - 4;
+    return dot[0] == '.' && (dot[1] == 't' || dot[1] == 'T') && (dot[2] == 'x' || dot[2] == 'X') &&
+           (dot[3] == 't' || dot[3] == 'T');
+}
+
+static bool book_folder_skipped(const char *folder)
+{
+    if (folder[0] != '/' || folder[1] == '.') {
+        return true;
+    }
+    for (uint32_t index = 0; folder[index] != '\0'; index++) {
+        if (folder[index] == '/' && folder[index + 1] == '.') {
+            return true;
+        }
+    }
+    if (folder[1] == '\0') {
+        return false;
+    }
+    return folder[1] == 'E' && folder[2] == 'Q' && (folder[3] == '\0' || folder[3] == '/');
+}
+
+static void note_book(const char *folder, const char *name)
+{
+    if (book_count >= READER_BOOKS_MAX || book_folder_skipped(folder)) {
+        return;
+    }
+    char path[READER_BOOKS_PATH_CAPACITY];
+    uint32_t length = 0;
+    for (uint32_t index = 0; folder[index] != '\0'; index++) {
+        if (length + 1 >= (uint32_t)sizeof path) {
+            return;
+        }
+        path[length++] = folder[index];
+    }
+    if (length == 0 || path[length - 1] != '/') {
+        if (length + 1 >= (uint32_t)sizeof path) {
+            return;
+        }
+        path[length++] = '/';
+    }
+    for (uint32_t index = 0; name[index] != '\0'; index++) {
+        if (length + 1 >= (uint32_t)sizeof path) {
+            return;
+        }
+        path[length++] = name[index];
+    }
+    path[length] = '\0';
+    uint32_t offset =
+        READER_BOOKS_HEADER_BYTES + (uint32_t)book_count * (uint32_t)READER_BOOKS_PATH_CAPACITY;
+    if (!hal_file_write_at(READER_BOOKS_PATH, offset, path, length + 1)) {
+        return;
+    }
+    book_count++;
+    uint8_t count[2] = {(uint8_t)(book_count & 0xFF), (uint8_t)(book_count >> 8)};
+    (void)hal_file_write_at(READER_BOOKS_PATH, 6, count, sizeof count);
+}
+
+static void reset_books(void)
+{
+    static const uint8_t header[READER_BOOKS_HEADER_BYTES] = {'E', 'B', 'K', 'S', 1, 0, 0, 0};
+    book_count = 0;
+    (void)hal_file_write(READER_BOOKS_PATH, header, sizeof header);
+}
+#endif
 
 static void spend(uint32_t kind, uint32_t since)
 {
@@ -78,6 +158,11 @@ static bool next_entry(void *context, ScanEntry *entry)
     if (!listed) {
         return false;
     }
+#ifdef ECHO_READER_DEMO
+    if (!files->entry.directory && book_suffix(files->entry.name)) {
+        note_book(files->folder, files->entry.name);
+    }
+#endif
     entry->directory = files->entry.directory;
     entry->modified = files->entry.modified;
     for (size_t index = 0; index < sizeof entry->name; index++) {
@@ -281,6 +366,9 @@ RescanOutcome library_rescan_run(RescanProgress progress)
     MusicFolders skip;
     folders_store_load(&skip);
     files.skip = &skip;
+#ifdef ECHO_READER_DEMO
+    reset_books();
+#endif
     uint32_t size = 0;
     void *memory = hal_system_borrow_scratch(&size);
     uint32_t listing_size = 0;

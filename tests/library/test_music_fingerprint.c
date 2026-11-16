@@ -176,7 +176,7 @@ static void files_the_library_ignores_do_not_count(void)
     music_card();
     MusicFingerprint before = fingerprint();
     add("/", "probe1.bin", false, 65536, 9);
-    add("/AC DC/Back In Black", "notes.txt", false, 120, 9);
+    add("/AC DC/Back In Black", "notes.doc", false, 120, 9);
     add("/AC DC/Back In Black", "scan 01.jpg", false, 900000, 9);
     add("/", "System Volume Information", true, 0, 9);
     add("/System Volume Information", "WPSettings.dat", false, 12, 9);
@@ -214,7 +214,8 @@ static void the_counted_formats_are_the_ones_the_scanner_reads(void)
         "x.dff",  "x.aac", "x.txt", "x.opus", "x.aiff", "x.mp4", "x.flac.txt", "x.qoa", "X.QOA"};
     for (size_t index = 0; index < sizeof NAMES / sizeof NAMES[0]; index++) {
         bool scanned = track_tags_format_for_name(NAMES[index]) != TAG_FORMAT_UNKNOWN;
-        CHECK_EQUAL(scanned, music_fingerprint_counts(NAMES[index], false));
+        bool book = strstr(NAMES[index], ".txt") != NULL;
+        CHECK_EQUAL(scanned || book, music_fingerprint_counts(NAMES[index], false));
     }
 }
 

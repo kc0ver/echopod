@@ -357,3 +357,5 @@ STR_SETTINGS_LIBRARY = Медіатека
 STR_SETTINGS_BUTTONS = Кнопки
 STR_SETTINGS_SYSTEM = Система
 STR_MENU_CHAPTERS = Розділи
+STR_READER = Читалка
+STR_READER_NO_BOOK = Немає книги: /Books/reader.txt

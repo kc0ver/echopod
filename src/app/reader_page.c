@@ -65,9 +65,9 @@ static bool never_ends_a_line(uint32_t codepoint)
     }
 }
 
-static size_t line_bytes(const Font *font, const char *text, size_t length, int width)
+static size_t line_bytes(const Font *font, const char *text, size_t length, int width, int indent)
 {
-    int used = 0;
+    int used = indent;
     size_t index = 0;
     size_t break_at = 0;
     size_t previous_start = 0;
@@ -107,9 +107,14 @@ static size_t line_bytes(const Font *font, const char *text, size_t length, int 
     return index;
 }
 
-size_t reader_line_bytes(const Font *font, const char *text, size_t length, int width)
+bool reader_starts_paragraph(const char *text, uint32_t offset)
 {
-    return length == 0 ? 0 : line_bytes(font, text, length, width);
+    return offset == 0 || text[offset - 1] == '\n';
+}
+
+size_t reader_line_bytes(const Font *font, const char *text, size_t length, int width, int indent)
+{
+    return length == 0 ? 0 : line_bytes(font, text, length, width, indent);
 }
 
 bool reader_page_next(const char *text, size_t length, uint32_t offset, ReaderLayout layout,
@@ -121,7 +126,9 @@ bool reader_page_next(const char *text, size_t length, uint32_t offset, ReaderLa
     uint32_t start = offset;
     int lines = 0;
     while (lines < layout.lines) {
-        size_t bytes = reader_line_bytes(layout.font, text + offset, length - offset, layout.width);
+        int indent = reader_starts_paragraph(text, offset) ? layout.indent : 0;
+        size_t bytes =
+            reader_line_bytes(layout.font, text + offset, length - offset, layout.width, indent);
         if (bytes == 0) {
             break;
         }

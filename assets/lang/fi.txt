@@ -357,3 +357,5 @@ STR_SETTINGS_LIBRARY = Kirjasto
 STR_SETTINGS_BUTTONS = Painikkeet
 STR_SETTINGS_SYSTEM = Järjestelmä
 STR_MENU_CHAPTERS = Luvut
+STR_READER = Lukija
+STR_READER_NO_BOOK = Ei kirjaa: /Books/reader.txt

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "app/reader_overlay.h"
 #include "core/i18n.h"
 #include "diagnostics_values.h"
 #include "hal/power.h"
@@ -25,16 +26,41 @@ enum {
     START_HOME_ONLY = -1
 };
 
-#ifdef ECHO_READER_DEMO
+#ifdef ECHO_READER_SIM
 static const char READER_DEMO_TEXT[] =
-    "第一页\n\n"
-    "这是一段用来检查排版的示例文字。屏幕一次放不下多少字，所以一页大约只有一百九十个汉字，"
-    "翻页会比较频繁。按播放键可以切换到十二像素字号，一页能多放一倍内容，但字会明显变小。\n\n"
-    "中文换行是按字断开的，英文单词会尽量保持完整，只有单词比整行还长时才会强制拆开。"
-    "行末的空格会被丢弃，段落之间的空行会保留。\n\n"
-    "混合排版测试：English words, numbers 1234567890, punctuation—including a dash, and a long "
-    "word pneumonoultramicroscopicsilicovolcanoconiosis.\n\n"
-    "音量下键翻到下一页，音量上键回到上一页，播放键切换字号，返回键退出阅读器。";
+    "第一章 山间来信\n\n"
+    "清晨的山谷还笼着一层薄雾，石板路上只有脚步声。林间的空气带着潮湿的草木气息，"
+    "远处的溪水声若隐若现，像是在提醒赶路的人：慢一点，再慢一点。\n\n"
+    "老邮差在石桥边停下，把肩上的邮包放在桥栏上。他从里面取出一封已经有些发黄的信，"
+    "信封上的字迹娟秀而陌生，落款处只写着一个名字——“阿遥”。\n\n"
+    "“这封信等了很久。”他自言自语，随后又笑了笑，把它重新放回包里。"
+    "桥下的水映着天色，泛出一点浅浅的青；几只麻雀落在电线上，排成一行小小的逗号。\n\n"
+    "山谷尽头是一座不大的村庄。炊烟从瓦房顶上慢慢升起，绕过树梢，散进云里。"
+    "孩子们在巷口追逐，笑声撞在石墙上，又弹回来，落在每个人的耳朵里。\n\n"
+    "阿遥站在院门口，手里握着一把旧钥匙。她已经等了三年，等到门前的桂花开了又谢，"
+    "谢了又开；等到信纸的边缘起了毛，字迹也淡了。她始终相信，那个人会回来。\n\n"
+    "第二章 灯下\n\n"
+    "夜里，雨点敲着窗户。她点起一盏灯，把信摊在桌上，一字一句地读："
+    "“若你看到这封信，说明山外的路已经通了。等春天再来的时候，我会沿着溪水走回来，"
+    "带着你最喜欢的糖炒栗子。”\n\n"
+    "她读到这里，忽然笑了，眼睛却有些湿。窗外的雨声渐渐小了，灯光把她的影子拉得很长，"
+    "一直延伸到墙角那口旧木箱上。箱子里放着两张车票、一本相册，还有一枚生了锈的徽章。\n\n"
+    "第二天清早，雾散了。她锁好院门，沿着石板路往山下走。路过石桥时，她停下脚步，"
+    "朝桥下看了一眼——水面平静，倒映着初升的太阳，明亮得让人睁不开眼。\n\n"
+    "第三章 归途\n\n"
+    "山路很长，弯弯曲曲，像一句没有写完的句子。她走得不快，偶尔停下来，"
+    "看看路边的野花，听听远处的鸟鸣。风从山谷里吹来，带着熟悉的味道。\n\n"
+    "傍晚时分，她终于看见了那座熟悉的村庄。炊烟依旧，瓦房依旧，巷口的孩子却长大了许多。"
+    "她停在村口，深深地吸了一口气，然后慢慢地、一步一步地走了进去。\n\n"
+    "屋里亮着灯。门没有关，桌上摆着热腾腾的饭菜，还有一包用油纸包好的糖炒栗子。"
+    "她停在门口，许久没有说话。灯下的人抬起头，笑着说：“回来了？”\n\n"
+    "她说：“回来了。”\n\n"
+    "排版测试段落：中文标点应当紧贴文字，例如逗号、句号、顿号、分号与冒号；"
+    "括号（圆括号）、方括号、书名号《山海经》、引号「春晓」、【备注】以及省略号……"
+    "都不应该出现在行首或行尾。英文与数字混排：Chapter 3, page 128, 2026-11-16; "
+    "a hyphenated word well-known, and a long word "
+    "pneumonoultramicroscopicsilicovolcanoconiosis.\n\n"
+    "操作提示：音量下键翻到下一页，音量上键回到上一页，播放键切换字号，返回键退出阅读器。";
 #endif
 
 static const int8_t START_ENTRIES[START_SCREEN_COUNT] = {
@@ -76,6 +102,14 @@ MenuItem app_screens_open_item(const char *label, Screen *target)
                       .value = NULL,
                       .opens = true};
 }
+
+#ifdef ECHO_READER_OVERLAY
+static ScreenAction open_reader(void *context)
+{
+    Screen *screen = reader_overlay_screen(context);
+    return screen != NULL ? screen_action_push(screen) : screen_action_none();
+}
+#endif
 
 Screen *app_screens_build_menu(MenuScreen *menu, const char *title, const MenuItem *items,
                                int count, const Theme *theme)
@@ -241,8 +275,13 @@ static void build_home(AppScreens *screens, AppScreensContext context)
         app_screens_open_item(i18n_text(STR_MENU_NOW_PLAYING), &screens->now_playing.screen);
     screens->home_items[5].shown = player_has_track;
     screens->home_items[5].shown_context = context.player;
-#ifdef ECHO_READER_DEMO
-    screens->home_items[6] = app_screens_open_item("Reader (demo)", &screens->reader.screen);
+#ifdef ECHO_READER_OVERLAY
+    screens->home_items[6] = (MenuItem){.label = i18n_text(STR_READER),
+                                        .select = open_reader,
+                                        .context = &screens->reader,
+                                        .opens = true};
+#elif defined(ECHO_READER_DEMO)
+    screens->home_items[6] = app_screens_open_item(i18n_text(STR_READER), &screens->reader.screen);
 #endif
     home_art_init(&screens->home_art, context.covers, context.store, context.player, theme);
     screens->home_art.notice = hal_storage_card_ready() ? NULL : i18n_text(STR_MENU_NO_CARD);
@@ -280,8 +319,10 @@ Screen *app_screens_init(AppScreens *screens, AppScreensContext context)
     message_screen_init(&screens->no_library, no_library);
     bluetooth_screen_init(&screens->bluetooth, context.bluetooth, theme);
     now_playing_screen_init(&screens->now_playing, now_playing);
-#ifdef ECHO_READER_DEMO
+#ifdef ECHO_READER_SIM
     reader_screen_init(&screens->reader, theme, READER_DEMO_TEXT, sizeof READER_DEMO_TEXT - 1);
+#elif defined(ECHO_READER_OVERLAY)
+    screens->reader = (ReaderScreen){.theme = theme};
 #endif
     build_music(screens, context);
     build_settings(screens, context);

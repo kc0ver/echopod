@@ -357,3 +357,5 @@ STR_SETTINGS_LIBRARY = Bibliotek
 STR_SETTINGS_BUTTONS = Knapper
 STR_SETTINGS_SYSTEM = System
 STR_MENU_CHAPTERS = Kapitler
+STR_READER = Leser
+STR_READER_NO_BOOK = Ingen bok: /Books/reader.txt

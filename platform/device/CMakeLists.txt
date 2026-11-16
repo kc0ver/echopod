@@ -205,6 +205,33 @@ set(ECHO_OVERLAY_IMPORTS
     utf8_next
     volume_is_internal_name
 )
+if(ECHO_RELEASE)
+    list(APPEND ECHO_OVERLAY_IMPORTS
+        canvas_fill_rect
+        font_find_glyph
+        font_line_height
+        hal_file_close
+        hal_file_open
+        hal_file_read
+        hal_file_write_at
+        hal_system_keep_alive
+        header_draw
+        label_centered_area
+        label_draw
+        marquee_frame_request
+        navigation_exit_action
+        rect_intersection
+        rect_is_empty
+        screen_action_none
+        slide_finished
+        slide_progress
+        slide_start
+        text_draw_span
+        theme_content_area
+        theme_title_area
+    )
+endif()
+
 set(ECHO_DEVICE_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/board/echo_device.ld)
 set_target_properties(echo_device PROPERTIES
     SUFFIX .elf
@@ -307,6 +334,42 @@ target_link_options(echo_usb_overlay PRIVATE
     -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/echo_usb_overlay.map
 )
 
+set(ECHO_READER_OVERLAY_ARGUMENTS "")
+set(ECHO_READER_OVERLAY_DEP "")
+if(ECHO_RELEASE)
+set(ECHO_READER_OVERLAY_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/overlay/reader_overlay.ld)
+add_executable(echo_reader_overlay
+    overlay/reader_overlay.c
+    ${PROJECT_SOURCE_DIR}/src/app/reader_page.c
+    ${PROJECT_SOURCE_DIR}/src/app/screens/reader_screen.c
+)
+set_target_properties(echo_reader_overlay PROPERTIES
+    SUFFIX .elf
+    LINK_DEPENDS "${ECHO_READER_OVERLAY_LINKER_SCRIPT};$<TARGET_FILE:echo_device>"
+)
+add_dependencies(echo_reader_overlay echo_device)
+target_include_directories(echo_reader_overlay PRIVATE
+    ${PROJECT_SOURCE_DIR}/src/app
+    ${PROJECT_SOURCE_DIR}/src/app/include
+    ${PROJECT_SOURCE_DIR}/src/core/include
+    ${PROJECT_SOURCE_DIR}/src/fonts/include
+    ${PROJECT_SOURCE_DIR}/src/gfx/include
+    ${PROJECT_SOURCE_DIR}/src/hal/include
+    ${PROJECT_SOURCE_DIR}/src/ui/include
+)
+target_link_libraries(echo_reader_overlay PRIVATE echo_options gcc)
+target_link_options(echo_reader_overlay PRIVATE
+    -fno-lto
+    -T${ECHO_READER_OVERLAY_LINKER_SCRIPT}
+    -Wl,--just-symbols=$<TARGET_FILE:echo_device>
+    -Wl,--allow-multiple-definition
+    -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/echo_reader_overlay.map
+)
+
+set(ECHO_READER_OVERLAY_ARGUMENTS --reader-overlay $<TARGET_FILE:echo_reader_overlay>)
+set(ECHO_READER_OVERLAY_DEP echo_reader_overlay)
+endif()
+
 set(ECHO_FIRMWARE_VERSION "0.12.0" CACHE STRING "major.minor.patch written to the image header")
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(ECHO_DEVICE_IMAGE ${CMAKE_BINARY_DIR}/HIFIEC90.IMG)
@@ -322,6 +385,7 @@ add_custom_target(echo_device_image ALL
         --nm ${CMAKE_NM}
         --overlay $<TARGET_FILE:echo_rescan_overlay>
         --usb-overlay $<TARGET_FILE:echo_usb_overlay>
+        ${ECHO_READER_OVERLAY_ARGUMENTS}
         --core1-mp3 ${ECHO_CORE1_MP3_BINARY}
         --core1-flac ${ECHO_CORE1_BINARY}
         --core1-aac ${ECHO_CORE1_AAC_BINARY}
@@ -333,7 +397,7 @@ add_custom_target(echo_device_image ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ECHO_DEVICE_IMAGE}
         ${CMAKE_BINARY_DIR}/MINIV898.IMG
     BYPRODUCTS ${ECHO_DEVICE_IMAGE} ${CMAKE_BINARY_DIR}/MINIV898.IMG
-    DEPENDS echo_device echo_rescan_overlay echo_usb_overlay ${ECHO_CORE1_MP3_BINARY} ${ECHO_CORE1_BINARY}
+    DEPENDS echo_device echo_rescan_overlay echo_usb_overlay ${ECHO_READER_OVERLAY_DEP} ${ECHO_CORE1_MP3_BINARY} ${ECHO_CORE1_BINARY}
         ${ECHO_CORE1_AAC_BINARY} ${ECHO_CORE1_OPUS_BINARY}
         ${PROJECT_SOURCE_DIR}/tools/make_image.py
     VERBATIM
@@ -342,7 +406,7 @@ add_custom_target(echo_device_image ALL
 add_custom_target(echo_size_report
     COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/size_report.py
         --build ${CMAKE_BINARY_DIR} --nm ${CMAKE_NM}
-    DEPENDS echo_device echo_rescan_overlay echo_usb_overlay
+    DEPENDS echo_device echo_rescan_overlay echo_usb_overlay ${ECHO_READER_OVERLAY_DEP}
     VERBATIM
     USES_TERMINAL
 )

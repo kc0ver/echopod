@@ -22,6 +22,8 @@ static NpFacesGate np_faces_gate;
 
 static const BoardOverlay NP_FACES_OVERLAY = {NP_FACES_IMAGE_OFFSET, NP_FACES_IMAGE_MAGIC,
                                               (uint8_t *)NP_FACES_BASE, NP_FACES_BYTES};
+static const BoardOverlay READER_OVERLAY = {READER_OVERLAY_IMAGE_OFFSET, READER_OVERLAY_MAGIC,
+                                            (uint8_t *)READER_OVERLAY_BASE, READER_OVERLAY_BYTES};
 
 static uint32_t le32(const uint8_t *bytes)
 {
@@ -158,4 +160,11 @@ __attribute__((noinline)) const void *hal_system_load_faces(void)
 const void *board_usb_overlay_load(void)
 {
     return load_window(USB_OVERLAY_IMAGE_OFFSET, USB_OVERLAY_MAGIC);
+}
+
+const void *hal_system_load_reader(void)
+{
+    return board_overlay_load(&READER_OVERLAY)
+               ? (const void *)(uintptr_t)(READER_OVERLAY_BASE + OVERLAY_HEADER_BYTES)
+               : NULL;
 }

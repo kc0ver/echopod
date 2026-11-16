@@ -494,7 +494,12 @@ class OverlayTest(unittest.TestCase):
         self.assertEqual(make_image.FW_SIZE, end)
         self.assertEqual(0, make_image.USB_OVERLAY_OFFSET % 512)
         self.assertIn((make_image.GLYPH_TABLE_OFFSET + make_image.GLYPH_TABLE_SIZE,
-                       make_image.USB_OVERLAY_OFFSET), make_image.GLYPH_REGIONS)
+                       make_image.READER_OVERLAY_OFFSET), make_image.GLYPH_REGIONS)
+
+    def test_the_reader_overlay_fits_between_the_glyphs_and_the_usb_overlay(self):
+        self.assertLessEqual(
+            make_image.READER_OVERLAY_OFFSET + make_image.READER_OVERLAY_CAPACITY,
+            make_image.USB_OVERLAY_OFFSET)
 
     def test_a_usb_overlay_bigger_than_its_space_is_refused(self):
         with self.assertRaises(make_image.ImageError):
@@ -685,7 +690,7 @@ class NpFacesTest(unittest.TestCase):
             make_image.firmware_from_elf(firmware_elf(parts, [section]))
 
     def test_the_new_field_is_last_in_the_image_parts(self):
-        self.assertEqual("np_faces", list(make_image.ImageParts.__dataclass_fields__)[-1])
+        self.assertEqual("reader_overlay", list(make_image.ImageParts.__dataclass_fields__)[-1])
 
 
 class WindowReferenceTest(unittest.TestCase):

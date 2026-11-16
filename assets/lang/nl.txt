@@ -358,3 +358,5 @@ STR_SETTINGS_LIBRARY = Bibliotheek
 STR_SETTINGS_BUTTONS = Knoppen
 STR_SETTINGS_SYSTEM = Systeem
 STR_MENU_CHAPTERS = Hoofdstukken
+STR_READER = Lezer
+STR_READER_NO_BOOK = Geen boek: /Books/reader.txt

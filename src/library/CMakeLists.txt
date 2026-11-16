@@ -11,6 +11,9 @@ add_library(echo_library STATIC
     spoken_path.c
 )
 target_include_directories(echo_library PUBLIC include)
+if(ECHO_BUILD_SIM OR ECHO_RELEASE)
+    target_compile_definitions(echo_library PRIVATE ECHO_READER_DEMO=1)
+endif()
 if(CMAKE_CROSSCOMPILING)
     target_compile_definitions(echo_library PRIVATE ECHO_RESIDENT_TABLES)
 endif()

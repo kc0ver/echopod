@@ -1,0 +1,13 @@
+#pragma once
+
+enum {
+    READER_BOOKS_PATH_CAPACITY = 128,
+    READER_BOOKS_MAX = 127,
+    READER_BOOKS_HEADER_BYTES = 8,
+    READER_BOOKS_FILE_BYTES = 20480,
+    READER_INDEX_FILE_BYTES = 65536
+};
+
+extern const char READER_BOOKS_PATH[];
+extern const char READER_PROGRESS_PATH[];
+extern const char READER_INDEX_PATH[];

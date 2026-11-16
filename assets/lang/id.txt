@@ -341,3 +341,5 @@ STR_SETTINGS_LIBRARY = Pustaka
 STR_SETTINGS_BUTTONS = Tombol
 STR_SETTINGS_SYSTEM = Sistem
 STR_MENU_CHAPTERS = Bab
+STR_READER = Pembaca
+STR_READER_NO_BOOK = Tidak ada buku: /Books/reader.txt

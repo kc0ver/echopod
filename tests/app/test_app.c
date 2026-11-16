@@ -539,7 +539,11 @@ static void the_home_menu_hides_now_playing_with_nothing_loaded(void)
     start_app_with_library();
     move_down(HOME_NOW_PLAYING_INDEX);
     tap(KEY_PLAY);
+#if defined(ECHO_READER_DEMO)
+    CHECK(title_is("Reader"));
+#else
     CHECK(title_is("Music"));
+#endif
 }
 
 static void open_top_setting(int index)
@@ -1337,7 +1341,11 @@ static void a_fresh_card_gets_the_player_files_and_a_first_scan(void)
 static void a_card_that_has_the_files_is_not_rescanned(void)
 {
     start_on_a_fresh_card(HAL_RESERVE_EXISTS);
+#ifdef ECHO_READER_DEMO
+    CHECK_EQUAL(18, fake_hal_reserve_count());
+#else
     CHECK_EQUAL(15, fake_hal_reserve_count());
+#endif
     step();
     CHECK_EQUAL(0, fake_hal_scratch_borrow_count());
 }

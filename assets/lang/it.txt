@@ -358,3 +358,5 @@ STR_SETTINGS_LIBRARY = Libreria
 STR_SETTINGS_BUTTONS = Tasti
 STR_SETTINGS_SYSTEM = Sistema
 STR_MENU_CHAPTERS = Capitoli
+STR_READER = Lettore
+STR_READER_NO_BOOK = Nessun libro: /Books/reader.txt

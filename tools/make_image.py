@@ -24,6 +24,10 @@ OVERLAY_MAGIC = b"EOVL"
 USB_OVERLAY_OFFSET = 0x43C000
 USB_OVERLAY_CAPACITY = 0x10000
 USB_OVERLAY_MAGIC = b"EUSB"
+READER_OVERLAY_OFFSET = 0x438000
+READER_OVERLAY_CAPACITY = 0x2E2C
+READER_OVERLAY_BASE = 0x030771D4
+READER_OVERLAY_MAGIC = b"ERDR"
 CORE1_MP3_OFFSET = 0x240000
 CORE1_FLAC_OFFSET = 0x280000
 CORE1_AAC_OFFSET = 0x2A0200
@@ -53,7 +57,7 @@ GLYPH_FACE_LIMIT = (GLYPH_TABLE_SIZE - 8) // 8
 GLYPH_PAYLOAD_LIMIT = 0x30000
 GLYPH_REGIONS = (
     (GLYPH_PAYLOAD_LIMIT, OVERLAY_OFFSET),
-    (GLYPH_TABLE_OFFSET + GLYPH_TABLE_SIZE, USB_OVERLAY_OFFSET),
+    (GLYPH_TABLE_OFFSET + GLYPH_TABLE_SIZE, READER_OVERLAY_OFFSET),
     (CORE1_MP3_OFFSET + CORE1_MODULE_HEADER_SIZE + CORE1_MODULE_CAPACITY, CORE1_FLAC_OFFSET),
 )
 TABLE_CAPACITY = 91
@@ -130,6 +134,7 @@ class ImageParts:
     resident: bytes = b""
     usb_overlay: bytes = b""
     np_faces: bytes = b""
+    reader_overlay: bytes = b""
 
 
 def crc_table():
@@ -221,6 +226,8 @@ def assemble(parts):
     place_overlay(image, parts, parts.overlay, OVERLAY_OFFSET, OVERLAY_CAPACITY, OVERLAY_MAGIC)
     place_overlay(image, parts, parts.usb_overlay, USB_OVERLAY_OFFSET, USB_OVERLAY_CAPACITY,
                   USB_OVERLAY_MAGIC)
+    place_overlay(image, parts, parts.reader_overlay, READER_OVERLAY_OFFSET,
+                  READER_OVERLAY_CAPACITY, READER_OVERLAY_MAGIC)
     place_resident(image, parts)
     place_np_faces(image, parts)
     place_core1_module(image, parts.core1_mp3, CORE1_MP3_OFFSET)
@@ -482,7 +489,7 @@ def generated_header(version):
 
 def build_image(firmware, brand, build_tag, date, overlay=b"", core1_mp3=b"", core1_flac=b"",
                 version=DEFAULT_VERSION, glyph_faces=(), core1_aac=b"", core1_opus=b"",
-                usb_overlay=b""):
+                usb_overlay=b"", reader_overlay=b""):
     check_firmware(firmware)
     code_size, data_size = len(firmware.code), len(firmware.data)
     header = generated_header(version)
@@ -499,7 +506,7 @@ def build_image(firmware, brand, build_tag, date, overlay=b"", core1_mp3=b"", co
     rows += [(0, 0, 0, 0)] * (TABLE_CAPACITY - len(rows))
     return assemble(ImageParts(bytes(header), tuple(rows), payload, bytes(MARKER_SIZE), overlay,
                                core1_mp3, core1_flac, tuple(glyph_faces), core1_aac, core1_opus,
-                               firmware.resident, usb_overlay, firmware.np_faces))
+                               firmware.resident, usb_overlay, firmware.np_faces, reader_overlay))
 
 
 def validate_image(image):
@@ -580,11 +587,11 @@ def firmware_from_elf(elf):
                     regions=mapping_regions(elf))
 
 
-def overlay_from_elf(elf, zeroed=False):
+def overlay_from_elf(elf, zeroed=False, base=OVERLAY_BASE, capacity=OVERLAY_CAPACITY):
     sections = elf_sections(elf)
     overlay = sections.get(".overlay")
-    if overlay is None or overlay.address != OVERLAY_BASE:
-        raise ImageError(f"the overlay ELF needs an .overlay section at {OVERLAY_BASE:#010x}")
+    if overlay is None or overlay.address != base:
+        raise ImageError(f"the overlay ELF needs an .overlay section at {base:#010x}")
     allowed = {".overlay", ".bss"} if zeroed else {".overlay"}
     stray = [name for name, section in sections.items()
              if section.flags & SHF_ALLOC and section.size and name not in allowed]
@@ -592,10 +599,10 @@ def overlay_from_elf(elf, zeroed=False):
         raise ImageError("the overlay may only hold code and constants: " + ", ".join(sorted(stray)))
     bss = sections.get(".bss")
     if zeroed and bss is not None and bss.size:
-        if bss.kind != SHT_NOBITS or bss.address < OVERLAY_BASE + overlay.size:
+        if bss.kind != SHT_NOBITS or bss.address < base + overlay.size:
             raise ImageError("the overlay's .bss must be zeroed memory after its code")
-        if bss.address + bss.size > OVERLAY_BASE + OVERLAY_CAPACITY:
-            raise ImageError(f"the overlay and its .bss must fit {OVERLAY_CAPACITY:#x} bytes")
+        if bss.address + bss.size > base + capacity:
+            raise ImageError(f"the overlay and its .bss must fit {capacity:#x} bytes")
     return overlay.content
 
 
@@ -745,6 +752,8 @@ def parse_arguments(argv):
     parser.add_argument("--overlay", type=Path, help="rescan overlay ELF linked at 0x0307A000")
     parser.add_argument("--usb-overlay", type=Path,
                         help="USB and update overlay ELF linked at 0x0307A000")
+    parser.add_argument("--reader-overlay", type=Path,
+                        help="reader overlay ELF linked at 0x030771D4")
     parser.add_argument("--core1-mp3", type=Path, help="core 1 MP3 program, a raw binary")
     parser.add_argument("--core1-flac", type=Path, help="core 1 FLAC program, a raw binary")
     parser.add_argument("--core1-aac", type=Path, help="core 1 AAC program, a raw binary")
@@ -770,7 +779,7 @@ def main(argv=None):
     try:
         main_elf = arguments.elf.read_bytes()
         firmware = with_symbol_checks(firmware_from_elf(main_elf), arguments.elf, arguments.nm)
-        overlay = usb_overlay = b""
+        overlay = usb_overlay = reader_overlay = b""
         if arguments.overlay:
             overlay_elf = arguments.overlay.read_bytes()
             check_overlay_copies(main_elf, overlay_elf, "rescan overlay")
@@ -779,6 +788,12 @@ def main(argv=None):
             usb_overlay_elf = arguments.usb_overlay.read_bytes()
             check_overlay_copies(main_elf, usb_overlay_elf, "USB overlay")
             usb_overlay = overlay_from_elf(usb_overlay_elf, zeroed=True)
+        if arguments.reader_overlay:
+            reader_overlay_elf = arguments.reader_overlay.read_bytes()
+            check_overlay_copies(main_elf, reader_overlay_elf, "reader overlay")
+            reader_overlay = overlay_from_elf(reader_overlay_elf, zeroed=True,
+                                              base=READER_OVERLAY_BASE,
+                                              capacity=READER_OVERLAY_CAPACITY)
         core1_mp3 = arguments.core1_mp3.read_bytes() if arguments.core1_mp3 else b""
         core1_flac = arguments.core1_flac.read_bytes() if arguments.core1_flac else b""
         core1_aac = arguments.core1_aac.read_bytes() if arguments.core1_aac else b""
@@ -787,7 +802,7 @@ def main(argv=None):
                        for path in arguments.glyph_face]
         image = build_image(firmware, arguments.brand, build_tag, date, overlay, core1_mp3,
                             core1_flac, arguments.version, glyph_faces, core1_aac, core1_opus,
-                            usb_overlay)
+                            usb_overlay, reader_overlay)
     except ImageError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
