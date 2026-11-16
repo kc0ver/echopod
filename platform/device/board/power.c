@@ -16,7 +16,8 @@ static const GpioPin CHARGE_STATUS = {2, 3};
 
 enum {
     START_HOLD_MS = 1000,
-    CUT_WAIT_MS = 1000
+    CUT_WAIT_MS = 1000,
+    POWER_SETTLE_MS = 2000
 };
 
 static bool charge_status_ready;
@@ -161,9 +162,13 @@ void hal_power_off(void)
     board_stall_pause(true);
     while (gpio_read(POWER_KEY)) {
     }
-    dac_path_stop_if_up();
+    board_audio_shut_down();
+    dac_path_force_off();
     board_backlight_off();
+    board_display_sleep_now();
     board_bluetooth_off();
+    board_delay_ms(POWER_SETTLE_MS);
+    board_watchdog_kick();
     __asm__ volatile("cpsid i" ::: "memory");
     board_start_record_power_off();
     gpio_mux(POWER_HOLD, GPIO_FUNCTION_GPIO);

@@ -427,6 +427,16 @@ void dac_path_stop_if_up(void)
     }
 }
 
+void dac_path_force_off(void)
+{
+    dac_path_stop_if_up();
+    gpio_output(DAC_PINS[DAC_PIN_MUTE], true);
+    gpio_output(DAC_PINS[DAC_PIN_ENABLE_A], false);
+    gpio_output(DAC_PINS[DAC_PIN_ENABLE_B], false);
+    gpio_output(DAC_PINS[DAC_PIN_RESET], false);
+    gpio_output(DAC_PINS[DAC_PIN_AMP], false);
+}
+
 void dac_path_set_fade_service(void (*service)(void))
 {
     fade_service = service;

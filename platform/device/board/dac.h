@@ -8,6 +8,7 @@
 HalToneResult dac_path_start(uint32_t sample_rate);
 void dac_path_stop(void);
 void dac_path_stop_if_up(void);
+void dac_path_force_off(void);
 bool dac_path_is_up(void);
 bool dac_path_amp_on(void);
 void dac_path_follow_route(void);

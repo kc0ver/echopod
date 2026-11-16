@@ -23,6 +23,7 @@ void board_backlight_full(void);
 bool board_display_lit(void);
 bool board_display_awake(void);
 void board_display_wake_now(void);
+void board_display_sleep_now(void);
 uint8_t board_sleep_percent(void);
 bool board_saving(uint32_t saving);
 void board_display_clear(void);

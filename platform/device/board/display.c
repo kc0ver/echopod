@@ -243,6 +243,17 @@ static void sleep_panel(void)
     panel_changed_ms = hal_clock_milliseconds();
 }
 
+void board_display_sleep_now(void)
+{
+    if (panel_asleep) {
+        return;
+    }
+    settle_panel();
+    panel_sleep(&BUS);
+    panel_asleep = true;
+    panel_changed_ms = hal_clock_milliseconds();
+}
+
 static void wake_panel(void)
 {
     if (!panel_asleep) {
