@@ -371,6 +371,11 @@ EmmcProbe emmc_probe(void)
     return probe;
 }
 
+bool emmc_is_sd_nand(void)
+{
+    return sd_nand_mode;
+}
+
 bool emmc_start(EmmcInfo *info)
 {
     if (!started) {
