@@ -261,6 +261,10 @@ echo_add_unit_test(NAME test_stopwatch_screen
     LIBRARIES echo_app echo_library_scan
     PRIVATE_INCLUDES ${PROJECT_SOURCE_DIR}/src/app
 )
+echo_add_unit_test(NAME test_reader_page
+    SOURCES app/test_reader_page.c
+    LIBRARIES echo_app
+)
 echo_add_unit_test(NAME test_clock_store
     SOURCES app/test_clock_store.c app/fake_hal.c
     LIBRARIES echo_app echo_library_scan

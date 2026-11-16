@@ -23,6 +23,7 @@ add_library(echo_app STATIC
     library_store.c
     listen_history.c
     player.c
+    reader_page.c
     scrobbler_log.c
     settings_screens.c
     settings_store.c
@@ -36,6 +37,7 @@ add_library(echo_app STATIC
     screens/folders_screen.c
     screens/font_sample_screen.c
     screens/now_playing_screen.c
+    screens/reader_screen.c
     screens/up_next_screen.c
     screens/stopwatch_screen.c
     screens/test_pattern_screen.c
