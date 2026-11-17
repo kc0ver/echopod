@@ -17,7 +17,14 @@ option(ECHO_BUILD_SIM "Build the SDL2 simulator" ON)
 option(ECHO_BUILD_TESTS "Build the host tests" ON)
 option(ECHO_BUILD_DEVICE "Build the device firmware with cmake/arm-none-eabi.cmake" OFF)
 option(ECHO_RELEASE "Leave the developer-only Diagnostics rows out of the build" OFF)
+option(ECHO_FEATURE_MP4 "Include the MP4 container (m4a/m4b, AAC and ALAC)" ON)
+option(ECHO_FEATURE_OGG "Include Ogg/Opus playback" ON)
+option(ECHO_FEATURE_BLUETOOTH "Include Bluetooth audio" ON)
+option(ECHO_FEATURE_EQUALIZER "Include the equalizer" ON)
 set(ECHO_APP_RAM_BUDGET_BYTES 131072 CACHE STRING "Static RAM budget for src/ on the device")
+
+message(STATUS "EchoPod features: MP4=${ECHO_FEATURE_MP4} OGG=${ECHO_FEATURE_OGG} "
+               "Bluetooth=${ECHO_FEATURE_BLUETOOTH} Equalizer=${ECHO_FEATURE_EQUALIZER}")
 
 include(cmake/project_options.cmake)
 

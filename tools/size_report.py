@@ -19,6 +19,7 @@ LOADED_LIMIT = 437600
 OVERLAY_CAPACITY = 0x15000
 RESIDENT_CAPACITY = 0x4800
 NP_FACES_CAPACITY = 0x3600
+READER_OVERLAY_CAPACITY = 0x2E2C
 HIGH_RAM_CAPACITY = 0x11A00
 USB_OVERLAY_IMAGE_CAPACITY = 0x10000
 CODE_SECTIONS = (".code",)
@@ -178,7 +179,7 @@ def limit_line(label, used, limit):
     return f"{label}: {used:,} of {limit:,} bytes, {free:,} free{state}"
 
 
-def summary(device_map, overlay_map=None, usb_overlay_map=None):
+def summary(device_map, overlay_map=None, usb_overlay_map=None, reader_overlay_map=None):
     sizes = output_sizes(device_map)
     code = sizes.get(".code", 0)
     data = sizes.get(".data", 0)
@@ -194,6 +195,10 @@ def summary(device_map, overlay_map=None, usb_overlay_map=None):
     if overlay_map is not None:
         overlay = output_sizes(overlay_map).get(".overlay", 0)
         lines.append(limit_line("rescan overlay", overlay, OVERLAY_CAPACITY))
+    if reader_overlay_map is not None:
+        reader = output_sizes(reader_overlay_map)
+        used = reader.get(".overlay", 0) + reader.get(".bss", 0)
+        lines.append(limit_line("reader overlay code + .bss", used, READER_OVERLAY_CAPACITY))
     if usb_overlay_map is not None:
         usb = output_sizes(usb_overlay_map)
         code = usb.get(".overlay", 0)
@@ -274,10 +279,13 @@ def parse_arguments(argv):
     parser.add_argument("--elf", type=Path, help="the device ELF, for attributing LTO code")
     parser.add_argument("--overlay-map", type=Path, help="the rescan overlay map file")
     parser.add_argument("--usb-overlay-map", type=Path, help="the USB overlay map file")
+    parser.add_argument("--reader-overlay-map", type=Path, help="the reader overlay map file")
     parser.add_argument("--nm", default="arm-none-eabi-nm", help="the nm to run on the ELF")
     parser.add_argument("--top", type=int, default=25, help="how many symbols to list")
     parser.add_argument("--objects", type=int, default=40, help="how many objects to list")
     parser.add_argument("--summary", action="store_true", help="only the lines against the limits")
+    parser.add_argument("--check", action="store_true",
+                        help="exit non-zero when a budget is over")
     arguments = parser.parse_args(argv)
     if arguments.build is not None:
         directory = arguments.build / "platform" / "device"
@@ -289,6 +297,9 @@ def parse_arguments(argv):
         usb_overlay = directory / "echo_usb_overlay.map"
         if arguments.usb_overlay_map is None and usb_overlay.exists():
             arguments.usb_overlay_map = usb_overlay
+        reader_overlay = directory / "echo_reader_overlay.map"
+        if arguments.reader_overlay_map is None and reader_overlay.exists():
+            arguments.reader_overlay_map = reader_overlay
     if arguments.map is None:
         parser.error("give --build or --map")
     return arguments
@@ -303,8 +314,15 @@ def main(argv=None):
     usb_overlay_map = None
     if arguments.usb_overlay_map is not None:
         usb_overlay_map = arguments.usb_overlay_map.read_text(encoding="utf-8", errors="replace")
+    reader_overlay_map = None
+    if arguments.reader_overlay_map is not None:
+        reader_overlay_map = arguments.reader_overlay_map.read_text(encoding="utf-8",
+                                                                    errors="replace")
     if arguments.summary:
-        print("\n".join(summary(device_map, overlay_map, usb_overlay_map)))
+        lines = summary(device_map, overlay_map, usb_overlay_map, reader_overlay_map)
+        print("\n".join(lines))
+        if arguments.check and any("OVER BY" in line for line in lines):
+            return 1
         return 0
     nm_text = run_nm(arguments.elf, arguments.nm)
     print(report(device_map, overlay_map, nm_text, arguments.top, arguments.objects,

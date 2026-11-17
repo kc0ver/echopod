@@ -4,7 +4,10 @@
 #include <stdint.h>
 
 #include "codec/flac.h"
+#include "core/features.h"
+#if ECHO_FEATURE_MP4
 #include "codec/mp4.h"
+#endif
 #include "device/audio_engine.h"
 #include "device/flac_source.h"
 
@@ -152,7 +155,9 @@ typedef struct Core1Source {
     StreamRegion region;
     uint32_t ring_capacity;
     FlacSource flac;
+#if ECHO_FEATURE_MP4
     Mp4Stream mp4;
+#endif
     FlacInput input;
     uint32_t generation;
     uint32_t slot;
@@ -177,6 +182,10 @@ void core1_source_fill(Core1Source *source);
 void core1_source_set_wake(Core1Source *source, void (*wake)(void));
 AudioSource core1_source_interface(Core1Source *source);
 AudioSource core1_source_mp3_interface(Core1Source *source);
+#if ECHO_FEATURE_MP4
 AudioSource core1_source_mp4_interface(Core1Source *source);
+#endif
+#if ECHO_FEATURE_OGG
 AudioSource core1_source_ogg_interface(Core1Source *source);
+#endif
 AudioSource core1_source_qoa_interface(Core1Source *source);

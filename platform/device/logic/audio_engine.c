@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#include "core/features.h"
+
 enum {
     UNITY_GAIN = 65536,
     GAIN_SHIFT = 16,
@@ -67,13 +69,20 @@ void audio_engine_set_volume(AudioEngine *engine, uint8_t level)
 
 void audio_engine_set_equalizer(AudioEngine *engine, const EqualizerCurve *curve)
 {
+#if ECHO_FEATURE_EQUALIZER
     equalizer_set_curve(&engine->equalizer, curve);
+#else
+    (void)engine;
+    (void)curve;
+#endif
 }
 
 static void use_output_rate(AudioEngine *engine)
 {
     engine->output_rate = engine->decode_rate;
+#if ECHO_FEATURE_EQUALIZER
     equalizer_set_rate(&engine->equalizer, engine->source_rate);
+#endif
 }
 
 static void release_frame(AudioEngine *engine)
@@ -383,9 +392,11 @@ static void copy_pending(AudioEngine *engine)
         uint32_t room = free_space(engine) / engine->repeat;
         uint32_t count = smaller(smaller(engine->pending_frames, room), CHUNK_FRAMES);
         convert_chunk(engine, chunk, count);
+#if ECHO_FEATURE_EQUALIZER
         if (equalizer_active(&engine->equalizer) && !engine->frame.equalized) {
             equalizer_process(&engine->equalizer, chunk, count);
         }
+#endif
         ramp_chunk(engine, chunk, count);
         write_chunk(engine, chunk, count);
         engine->pending_offset += count;
@@ -417,9 +428,13 @@ static void finish_decoding(AudioEngine *engine)
         engine->rate_end = engine->produced;
         return;
     }
+#if ECHO_FEATURE_EQUALIZER
     if (engine->source_rate != previous_rate) {
         equalizer_set_rate(&engine->equalizer, engine->source_rate);
     }
+#else
+    (void)previous_rate;
+#endif
     push_segment(engine, engine->next_path, engine->next_token, engine->produced, 0);
 }
 

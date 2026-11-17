@@ -19,6 +19,13 @@ target_compile_options(echo_options INTERFACE
     -Wformat=2
 )
 
+target_compile_definitions(echo_options INTERFACE
+    ECHO_FEATURE_MP4=$<BOOL:${ECHO_FEATURE_MP4}>
+    ECHO_FEATURE_OGG=$<BOOL:${ECHO_FEATURE_OGG}>
+    ECHO_FEATURE_BLUETOOTH=$<BOOL:${ECHO_FEATURE_BLUETOOTH}>
+    ECHO_FEATURE_EQUALIZER=$<BOOL:${ECHO_FEATURE_EQUALIZER}>
+)
+
 add_library(echo_compact INTERFACE)
 if(CMAKE_CROSSCOMPILING)
     target_compile_options(echo_compact INTERFACE -Os)

@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+#include "core/features.h"
 #include "core/i18n.h"
 #include "core/power_policy.h"
 #include "player.h"
@@ -25,8 +26,8 @@ typedef enum SettingsGroup {
 } SettingsGroup;
 
 enum {
-    SETTINGS_CHOICE_COUNT = 34,
-    SETTINGS_TOP_COUNT = 5 + SETTINGS_GROUP_COUNT,
+    SETTINGS_CHOICE_COUNT = 33 + ECHO_FEATURE_BLUETOOTH,
+    SETTINGS_TOP_COUNT = 3 + ECHO_FEATURE_BLUETOOTH + ECHO_FEATURE_EQUALIZER + SETTINGS_GROUP_COUNT,
     SETTINGS_GROUP_ROWS_MAX = 11
 };
 

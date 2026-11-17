@@ -1,9 +1,8 @@
-add_library(echo_app STATIC
+set(ECHO_APP_SOURCES
     app.c
     card_files.c
     clock_store.c
     app_screens.c
-    bluetooth_link.c
     bluetooth_store.c
     browse_screen.c
     cover_cache.c
@@ -40,6 +39,21 @@ add_library(echo_app STATIC
     screens/stopwatch_screen.c
     screens/test_pattern_screen.c
 )
+if(ECHO_FEATURE_BLUETOOTH)
+    list(APPEND ECHO_APP_SOURCES bluetooth_link.c)
+else()
+    list(APPEND ECHO_APP_SOURCES bluetooth_link_off.c screens/bluetooth_screen_off.c)
+    list(REMOVE_ITEM ECHO_APP_SOURCES bluetooth_store.c screens/bluetooth_screen.c)
+endif()
+if(ECHO_FEATURE_EQUALIZER)
+    list(APPEND ECHO_APP_SOURCES equalizer_files.c equalizer_store.c
+         screens/equalizer_screen.c)
+else()
+    list(APPEND ECHO_APP_SOURCES equalizer_store_off.c screens/equalizer_screen_off.c)
+    list(REMOVE_ITEM ECHO_APP_SOURCES equalizer_files.c equalizer_store.c
+         screens/equalizer_screen.c)
+endif()
+add_library(echo_app STATIC ${ECHO_APP_SOURCES})
 target_include_directories(echo_app PUBLIC include PRIVATE .)
 if(ECHO_BUILD_SIM)
     target_sources(echo_app PRIVATE reader_book.c reader_page.c screens/reader_screen.c)

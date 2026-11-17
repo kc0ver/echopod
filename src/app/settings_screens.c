@@ -69,7 +69,9 @@ static const StringId HIGHLIGHT_OPTIONS[2] = {STR_SETTINGS_GRADIENT, STR_SETTING
 static const StringId COVER_ORDER_OPTIONS[2] = {STR_SETTINGS_BY_ALBUM_ARTIST,
                                                 STR_SETTINGS_BY_ALBUM_TITLE};
 static const StringId ARTIST_VIEW_OPTIONS[2] = {STR_SETTINGS_LIST, STR_MENU_COVER_FLOW};
+#if ECHO_FEATURE_BLUETOOTH
 static const StringId BLUETOOTH_LEVEL_OPTIONS[2] = {STR_SETTINGS_STANDARD, STR_SETTINGS_LOUDER};
+#endif
 ECHO_RESIDENT static const StringId NP_FACE_OPTIONS[NP_FACE_COUNT] = {
     STR_SETTINGS_STANDARD, STR_SETTINGS_CASSETTE, STR_SETTINGS_VU_METERS, STR_SETTINGS_TURNTABLE,
     STR_SETTINGS_LCD_DECK};
@@ -221,6 +223,7 @@ static void choose_gain(void *context, int index)
     apply_and_save(context);
 }
 
+#if ECHO_FEATURE_BLUETOOTH
 static int current_bluetooth_level(const void *context)
 {
     return settings_of(context)->options[OPTION_BLUETOOTH_LEVEL];
@@ -231,6 +234,7 @@ static void choose_bluetooth_level(void *context, int index)
     editable_settings(context)->options[OPTION_BLUETOOTH_LEVEL] = (uint8_t)index;
     apply_and_save(context);
 }
+#endif
 
 static int current_filter(const void *context)
 {
@@ -375,8 +379,10 @@ ECHO_RESIDENT static const SettingChoice CHOICES[SETTINGS_CHOICE_COUNT] = {
     OPTION_CHOICE(STR_SETTINGS_COVER_ORDER, COVER_ORDER_OPTIONS, OPTION_COVER_ORDER),
     OPTION_CHOICE(STR_SETTINGS_ARTIST_VIEW, ARTIST_VIEW_OPTIONS, OPTION_ARTIST_VIEW),
     OPTION_CHOICE(STR_SETTINGS_LISTEN_HISTORY, SHOWN_OPTIONS, OPTION_LISTEN_HISTORY),
+#if ECHO_FEATURE_BLUETOOTH
     {STR_SETTINGS_BLUETOOTH_LEVEL, BLUETOOTH_LEVEL_OPTIONS, NULL, 2, current_bluetooth_level,
      choose_bluetooth_level, NULL, 0},
+#endif
     OPTION_CHOICE(STR_SETTINGS_USB_PROMPT, SHOWN_OPTIONS, OPTION_USB_PROMPT),
     OPTION_CHOICE(STR_MENU_COVER_FLOW, COVER_COUNT_OPTIONS, OPTION_COVER_FLOW_COVERS),
     OPTION_CHOICE(STR_SETTINGS_ANIMATIONS, ANIMATION_OPTIONS, OPTION_ANIMATION_SPEED),
@@ -458,7 +464,9 @@ enum {
     CHOICE_COVER_ORDER,
     CHOICE_ARTIST_VIEW,
     CHOICE_HISTORY,
+#if ECHO_FEATURE_BLUETOOTH
     CHOICE_BLUETOOTH_LEVEL,
+#endif
     CHOICE_USB_PROMPT,
     CHOICE_COVERS,
     CHOICE_ANIMATIONS,
@@ -499,8 +507,12 @@ ECHO_RESIDENT static const SettingsLink LINKS[ROW_GROUP - ROW_BLUETOOTH] = {
 
 ECHO_RESIDENT static const uint8_t ROWS[] = {CHOICE_SHUFFLE,
                                              CHOICE_REPEAT,
+#if ECHO_FEATURE_BLUETOOTH
                                              ROW_BLUETOOTH,
+#endif
+#if ECHO_FEATURE_EQUALIZER
                                              ROW_EQUALIZER,
+#endif
                                              CHOICE_SLEEP,
                                              ROW_GROUP,
                                              ROW_GROUP + 1,
@@ -511,7 +523,9 @@ ECHO_RESIDENT static const uint8_t ROWS[] = {CHOICE_SHUFFLE,
                                              CHOICE_OUTPUT,
                                              CHOICE_FILTER,
                                              CHOICE_BALANCE,
+#if ECHO_FEATURE_BLUETOOTH
                                              CHOICE_BLUETOOTH_LEVEL,
+#endif
                                              CHOICE_THEME,
                                              CHOICE_ACCENT,
                                              CHOICE_HIGHLIGHT,
@@ -543,7 +557,11 @@ ECHO_RESIDENT static const uint8_t ROWS[] = {CHOICE_SHUFFLE,
                                              CHOICE_USB_PROMPT};
 
 enum {
+#if ECHO_FEATURE_BLUETOOTH
     SOUND_ROWS = 5,
+#else
+    SOUND_ROWS = 4,
+#endif
     DISPLAY_FIRST = SETTINGS_TOP_COUNT + SOUND_ROWS,
     DISPLAY_ROWS = 11,
     LIBRARY_FIRST = DISPLAY_FIRST + DISPLAY_ROWS,

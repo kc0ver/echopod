@@ -31,6 +31,18 @@
       "cacheVariables": {
         "ECHO_RELEASE": "ON"
       }
+    },
+    {
+      "name": "slim",
+      "displayName": "Slim firmware (MP3/FLAC, no MP4, Ogg, Bluetooth or equalizer)",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/slim",
+      "cacheVariables": {
+        "ECHO_FEATURE_MP4": "OFF",
+        "ECHO_FEATURE_OGG": "OFF",
+        "ECHO_FEATURE_BLUETOOTH": "OFF",
+        "ECHO_FEATURE_EQUALIZER": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -45,6 +57,10 @@
     {
       "name": "release",
       "configurePreset": "release"
+    },
+    {
+      "name": "slim",
+      "configurePreset": "slim"
     }
   ],
   "testPresets": [

@@ -2,13 +2,20 @@
 
 #include <stddef.h>
 
+#include "core/features.h"
 #include "core/hash.h"
 
 #define SECOND_SEED (HASH_START ^ UINT32_C(0x5BD1E995))
 
 static const char *const LIBRARY_SUFFIXES[] = {
-    ".flac", ".ogg", ".opus", ".mp3", ".m4a", ".m4b", ".wav",
-    ".wma",  ".ape", ".dsf",  ".dff", ".qoa", ".m3u", ".m3u8",
+    ".flac", ".mp3",  ".wav",
+#ifdef ECHO_FEATURE_MP4
+    ".m4a",  ".m4b",
+#endif
+#ifdef ECHO_FEATURE_OGG
+    ".ogg",  ".opus",
+#endif
+    ".wma",  ".ape",  ".dsf", ".dff", ".qoa", ".m3u", ".m3u8",
 #ifdef ECHO_READER_DEMO
     ".txt",
 #endif

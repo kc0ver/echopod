@@ -15,6 +15,12 @@ set(ECHO_CODEC_SOURCES
     ogg.c
     qoa.c
 )
+if(NOT ECHO_FEATURE_MP4)
+    list(REMOVE_ITEM ECHO_CODEC_SOURCES alac.c mp4.c)
+endif()
+if(NOT ECHO_FEATURE_OGG)
+    list(REMOVE_ITEM ECHO_CODEC_SOURCES ogg.c)
+endif()
 add_library(echo_codec STATIC ${ECHO_CODEC_SOURCES})
 if(CMAKE_CROSSCOMPILING)
     set_source_files_properties(mp4.c ogg.c PROPERTIES COMPILE_OPTIONS -Os)

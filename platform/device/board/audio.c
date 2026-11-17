@@ -3,8 +3,13 @@
 #include <stdint.h>
 
 #include "board.h"
+#include "core/features.h"
+#if ECHO_FEATURE_MP4
 #include "codec/mp4.h"
+#endif
+#if ECHO_FEATURE_OGG
 #include "codec/ogg.h"
+#endif
 #include "core/format.h"
 #include "core1_region.h"
 #include "dac.h"
@@ -90,7 +95,9 @@ static bool resume_after_clock_change;
 static bool paused_before_clock_change;
 static uint32_t position_before_clock_change;
 static AudioEngine engine;
+#if ECHO_FEATURE_EQUALIZER
 static EqualizerCurve equalizer_curve;
+#endif
 static DmaItem items[RING_BLOCKS];
 static HalFile file;
 static bool engine_ready;
@@ -192,6 +199,7 @@ static uint32_t le32_at(const uint8_t *bytes)
            (uint32_t)bytes[3] << 24;
 }
 
+#if ECHO_FEATURE_MP4
 static TrackProbe probe_mp4(FlacInput input)
 {
     Mp4Track track;
@@ -204,12 +212,15 @@ static TrackProbe probe_mp4(FlacInput input)
     bool aac = track.object_type == MP4_OBJECT_AAC_LC;
     return (TrackProbe){aac ? SOURCE_AAC : SOURCE_UNKNOWN, aac ? track.sample_rate : 0};
 }
+#endif
 
+#if ECHO_FEATURE_OGG
 static TrackProbe probe_ogg(FlacInput input)
 {
     OggOpusInfo opus;
     return (TrackProbe){ogg_opus_probe(input, &opus) ? SOURCE_OPUS : SOURCE_UNKNOWN, 0};
 }
+#endif
 
 static TrackProbe probe_header(const uint8_t *magic, bool read)
 {
@@ -234,12 +245,16 @@ static TrackProbe probe_input(FlacInput input)
     uint8_t magic[LIGHT_SNIFF_BYTES] = {0};
     uint32_t length = input.size < LIGHT_SNIFF_BYTES ? input.size : LIGHT_SNIFF_BYTES;
     bool read = input.size >= SNIFF_BYTES && input.read(input.context, 0, magic, length);
+#if ECHO_FEATURE_MP4
     if (read && mp4_signature(magic)) {
         return probe_mp4(input);
     }
+#endif
+#if ECHO_FEATURE_OGG
     if (read && ogg_signature(magic)) {
         return probe_ogg(input);
     }
+#endif
     TrackProbe probe = probe_header(magic, read);
     if (input.size < LIGHT_SNIFF_BYTES) {
         probe.rate = 0;
@@ -264,10 +279,16 @@ static Core1Program program_for(SourceKind kind)
     if (kind == SOURCE_MP3) {
         return CORE1_PROGRAM_MP3;
     }
+#if ECHO_FEATURE_OGG
     if (kind == SOURCE_OPUS) {
         return CORE1_PROGRAM_OPUS;
     }
+#endif
+#if ECHO_FEATURE_MP4
     return kind == SOURCE_AAC ? CORE1_PROGRAM_AAC : CORE1_PROGRAM_FLAC;
+#else
+    return CORE1_PROGRAM_FLAC;
+#endif
 }
 
 static AudioSource chosen_source(void)
@@ -278,12 +299,16 @@ static AudioSource chosen_source(void)
     if (source_kind == SOURCE_MP3) {
         return core1_source_mp3_interface(&core1_source);
     }
+#if ECHO_FEATURE_MP4
     if (source_kind == SOURCE_ALAC || source_kind == SOURCE_AAC) {
         return core1_source_mp4_interface(&core1_source);
     }
+#endif
+#if ECHO_FEATURE_OGG
     if (source_kind == SOURCE_OPUS) {
         return core1_source_ogg_interface(&core1_source);
     }
+#endif
     if (source_kind == SOURCE_QOA) {
         return core1_source_qoa_interface(&core1_source);
     }
@@ -376,7 +401,9 @@ static void ensure_engine(void)
     AudioSource source = {open_chosen, next_chosen, release_chosen, close_chosen, NULL};
     audio_engine_init(
         &engine, (AudioEngineConfig){.source = source, .ring = ring(), .ring_words = RING_WORDS});
+#if ECHO_FEATURE_EQUALIZER
     audio_engine_set_equalizer(&engine, &equalizer_curve);
+#endif
     engine_ready = true;
 }
 
@@ -561,11 +588,13 @@ static bool light_track(const char *path)
 
 static bool equalizer_on(void)
 {
+#if ECHO_FEATURE_EQUALIZER
     for (int band = 0; band < equalizer_curve.band_count; band++) {
         if (equalizer_curve.bands[band].gain_tenths != 0) {
             return true;
         }
     }
+#endif
     return false;
 }
 
@@ -784,6 +813,7 @@ void hal_audio_set_output(HalAudioOutput output)
 
 void hal_audio_set_equalizer(const EqualizerCurve *curve)
 {
+#if ECHO_FEATURE_EQUALIZER
     equalizer_curve = *curve;
     board_core1_set_equalizer(curve);
     if (!engine_ready) {
@@ -798,6 +828,9 @@ void hal_audio_set_equalizer(const EqualizerCurve *curve)
     if (deferred || audio_engine_next_pending(&engine)) {
         follow_queue();
     }
+#else
+    (void)curve;
+#endif
 }
 
 static HalAudioState state_of(AudioEngineState state)

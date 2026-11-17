@@ -1,12 +1,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if ECHO_FEATURE_MP4
 #include "codec/alac.h"
+#endif
 #include "codec/flac.h"
 #include "codec/qoa.h"
+#include "core/features.h"
 #include "core1_region.h"
 #include "core1_ticks.h"
+#if ECHO_FEATURE_MP4
 #include "device/core1_alac.h"
+#endif
 #include "device/core1_control.h"
 #include "device/core1_qoa.h"
 #include "device/flac_accel.h"
@@ -17,8 +22,10 @@
 
 #define SYSTICK_ENABLE_CORE_CLOCK 0x5u
 
+#if ECHO_FEATURE_MP4
 _Static_assert(sizeof(AlacDecoder) <= sizeof(int32_t[FLAC_MAX_BLOCK]),
                "the ALAC decoder must fit in the FLAC program's second bank");
+#endif
 _Static_assert(sizeof(QoaDecoder) <= sizeof(int32_t[FLAC_MAX_BLOCK]),
                "the QOA decoder must fit in the FLAC program's second bank");
 
@@ -26,13 +33,17 @@ void core1_main(void);
 
 static FlacDecoder flac_decoder;
 static Core1Flac flac;
+#if ECHO_FEATURE_MP4
 static Core1Alac alac;
+#endif
 static Core1Qoa qoa;
 static Core1Decoder flac_stream;
 static FlacLpcHook lpc_hook;
 static AccelHook accel_hook;
 static Core1Stream stream;
+#if ECHO_FEATURE_EQUALIZER
 static Equalizer equalizer;
+#endif
 
 static void start_systick(void)
 {
@@ -157,13 +168,17 @@ void core1_main(void)
     flac_stream = core1_flac_decoder(&flac, &flac_decoder, banks);
     core1_stream_init(&stream, core1_region(), (Core1Decoder){start_flac, decode_flac, NULL});
     core1_stream_set_slots(&stream, CORE1_FLAC_SLOT_OFFSET, CORE1_FLAC_SLOT_SAMPLES);
+#if ECHO_FEATURE_MP4
     core1_stream_set_decoder(
         &stream, STREAM_CODEC_ALAC,
         core1_alac_decoder(&alac, (AlacDecoder *)(uintptr_t)CORE1_FLAC_BANK_1));
+#endif
     core1_stream_set_decoder(&stream, STREAM_CODEC_QOA,
                              core1_qoa_decoder(&qoa, (QoaDecoder *)(uintptr_t)CORE1_FLAC_BANK_1));
+#if ECHO_FEATURE_EQUALIZER
     core1_stream_set_equalizer(&stream, &equalizer,
                                (volatile Core1EqualizerShare *)(uintptr_t)CORE1_SHARED_EQUALIZER);
+#endif
     core1_ticks_start();
     core1_ticks_measure(&stream);
     for (;;) {

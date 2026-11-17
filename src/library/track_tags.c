@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 
+#include "core/features.h"
 #include "tags_internal.h"
 
 typedef struct FormatName {
@@ -10,10 +11,15 @@ typedef struct FormatName {
 } FormatName;
 
 static const FormatName FORMATS[] = {
-    {"flac", TAG_FORMAT_FLAC}, {"ogg", TAG_FORMAT_OGG}, {"opus", TAG_FORMAT_OGG},
-    {"mp3", TAG_FORMAT_MP3},   {"m4a", TAG_FORMAT_MP4}, {"m4b", TAG_FORMAT_MP4},
-    {"wav", TAG_FORMAT_WAV},   {"wma", TAG_FORMAT_WMA}, {"ape", TAG_FORMAT_APE},
-    {"dsf", TAG_FORMAT_DSF},   {"dff", TAG_FORMAT_DFF}, {"qoa", TAG_FORMAT_QOA},
+    {"flac", TAG_FORMAT_FLAC}, {"mp3", TAG_FORMAT_MP3},
+#if ECHO_FEATURE_OGG
+    {"ogg", TAG_FORMAT_OGG},   {"opus", TAG_FORMAT_OGG},
+#endif
+#if ECHO_FEATURE_MP4
+    {"m4a", TAG_FORMAT_MP4},   {"m4b", TAG_FORMAT_MP4},
+#endif
+    {"wav", TAG_FORMAT_WAV},   {"wma", TAG_FORMAT_WMA},  {"ape", TAG_FORMAT_APE},
+    {"dsf", TAG_FORMAT_DSF},   {"dff", TAG_FORMAT_DFF},  {"qoa", TAG_FORMAT_QOA},
 };
 
 static char lower(char character)
@@ -296,12 +302,22 @@ static bool read_format(TagReader *reader, TagFormat format)
     switch (format) {
     case TAG_FORMAT_FLAC:
         return tags_read_flac(reader);
+#if ECHO_FEATURE_OGG
     case TAG_FORMAT_OGG:
         return tags_read_ogg(reader);
+#else
+    case TAG_FORMAT_OGG:
+        return false;
+#endif
     case TAG_FORMAT_MP3:
         return tags_read_mp3(reader);
+#if ECHO_FEATURE_MP4
     case TAG_FORMAT_MP4:
         return tags_read_mp4(reader);
+#else
+    case TAG_FORMAT_MP4:
+        return false;
+#endif
     case TAG_FORMAT_WAV:
         return tags_read_wav(reader);
     case TAG_FORMAT_WMA:

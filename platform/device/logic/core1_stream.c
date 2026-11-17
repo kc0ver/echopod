@@ -2,8 +2,11 @@
 
 #include <stddef.h>
 
-#include "codec/ogg.h"
 #include "codec/qoa.h"
+#include "core/features.h"
+#if ECHO_FEATURE_OGG
+#include "codec/ogg.h"
+#endif
 #include "device/core1_control.h"
 #include "device/mp3_probe.h"
 
@@ -144,12 +147,19 @@ static void count_wall(Core1Stream *stream)
 void core1_stream_set_equalizer(Core1Stream *stream, Equalizer *equalizer,
                                 volatile Core1EqualizerShare *share)
 {
+#if ECHO_FEATURE_EQUALIZER
     equalizer_init(equalizer);
     stream->equalizer = equalizer;
     stream->share = share;
     stream->share_version = 0;
+#else
+    (void)stream;
+    (void)equalizer;
+    (void)share;
+#endif
 }
 
+#if ECHO_FEATURE_EQUALIZER
 static void follow_share(Core1Stream *stream)
 {
     uint32_t version = stream->share->version;
@@ -188,6 +198,15 @@ static uint32_t equalize_slot(Core1Stream *stream, uint32_t slot, uint32_t sampl
     equalizer_process_block(stream->equalizer, (EqualizerBlock){left, right, samples, 1});
     return 1;
 }
+#else
+static uint32_t equalize_slot(Core1Stream *stream, uint32_t slot, uint32_t samples)
+{
+    (void)stream;
+    (void)slot;
+    (void)samples;
+    return 0;
+}
+#endif
 
 void core1_stream_set_decoder(Core1Stream *stream, uint32_t codec, Core1Decoder decoder)
 {
@@ -255,9 +274,11 @@ static void adopt(Core1Stream *stream, uint32_t generation)
     stream->starved = false;
     control->slot_offset = stream->slot_offset;
     control->slot_samples = stream->slot_samples;
+#if ECHO_FEATURE_EQUALIZER
     if (stream->equalizer != NULL) {
         equalizer_set_rate(stream->equalizer, info.sample_rate);
     }
+#endif
     FlacInput input = {
         .read = read_ring, .context = stream, .size = stream->end_offset - stream->start_offset};
     uint32_t codec = control->codec;
@@ -680,6 +701,7 @@ AudioSource core1_source_mp3_interface(Core1Source *source)
     return (AudioSource){open_mp3, next_frame, release_frame, close_stream, source};
 }
 
+#if ECHO_FEATURE_MP4
 static AudioCodec audio_codec_of(Mp4Codec codec)
 {
     return codec == MP4_CODEC_AAC ? AUDIO_CODEC_AAC : AUDIO_CODEC_ALAC;
@@ -758,7 +780,9 @@ AudioSource core1_source_mp4_interface(Core1Source *source)
 {
     return (AudioSource){open_mp4, next_frame, release_frame, close_stream, source};
 }
+#endif
 
+#if ECHO_FEATURE_OGG
 static bool open_ogg(void *context, const char *path, uint32_t start_ms, AudioTrackInfo *track)
 {
     Core1Source *source = context;
@@ -818,6 +842,7 @@ AudioSource core1_source_ogg_interface(Core1Source *source)
 {
     return (AudioSource){open_ogg, next_frame, release_frame, close_stream, source};
 }
+#endif
 
 static bool open_qoa(void *context, const char *path, uint32_t start_ms, AudioTrackInfo *track)
 {

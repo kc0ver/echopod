@@ -1,0 +1,17 @@
+#pragma once
+
+#ifndef ECHO_FEATURE_MP4
+#define ECHO_FEATURE_MP4 1
+#endif
+
+#ifndef ECHO_FEATURE_OGG
+#define ECHO_FEATURE_OGG 1
+#endif
+
+#ifndef ECHO_FEATURE_BLUETOOTH
+#define ECHO_FEATURE_BLUETOOTH 1
+#endif
+
+#ifndef ECHO_FEATURE_EQUALIZER
+#define ECHO_FEATURE_EQUALIZER 1
+#endif

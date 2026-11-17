@@ -1,4 +1,7 @@
 set(ECHO_DSP_SOURCES equalizer.c equalizer_design.c)
+if(NOT ECHO_FEATURE_EQUALIZER)
+    set(ECHO_DSP_SOURCES equalizer_off.c)
+endif()
 add_library(echo_dsp STATIC ${ECHO_DSP_SOURCES})
 target_include_directories(echo_dsp PUBLIC include)
 target_link_libraries(echo_dsp PRIVATE echo_options)

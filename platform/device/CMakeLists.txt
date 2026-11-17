@@ -1,6 +1,11 @@
+if(ECHO_FEATURE_BLUETOOTH)
+    set(ECHO_BOARD_BLUETOOTH_SOURCE board/bluetooth.c)
+else()
+    set(ECHO_BOARD_BLUETOOTH_SOURCE board/bluetooth_stub.c)
+endif()
 add_executable(echo_device
     board/audio.c
-    board/bluetooth.c
+    ${ECHO_BOARD_BLUETOOTH_SOURCE}
     board/clock.c
     board/clock_switch.c
     board/core1.c
@@ -80,6 +85,7 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM
 )
+if(ECHO_FEATURE_MP4)
 add_executable(echo_core1_aac
     core1/aac_main.c
     core1/startup.c
@@ -105,6 +111,10 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM
 )
+else()
+set(ECHO_CORE1_AAC_BINARY "")
+endif()
+if(ECHO_FEATURE_OGG)
 add_executable(echo_core1_opus
     core1/opus_main.c
     core1/startup.c
@@ -131,6 +141,9 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     VERBATIM
 )
+else()
+set(ECHO_CORE1_OPUS_BINARY "")
+endif()
 set(ECHO_CORE1_BINARY ${CMAKE_CURRENT_BINARY_DIR}/core1.bin)
 add_custom_command(
     OUTPUT ${ECHO_CORE1_BINARY}
@@ -370,6 +383,19 @@ set(ECHO_READER_OVERLAY_ARGUMENTS --reader-overlay $<TARGET_FILE:echo_reader_ove
 set(ECHO_READER_OVERLAY_DEP echo_reader_overlay)
 endif()
 
+set(ECHO_CORE1_AAC_ARGUMENTS "")
+set(ECHO_CORE1_AAC_DEPENDENCY "")
+if(ECHO_FEATURE_MP4)
+    list(APPEND ECHO_CORE1_AAC_ARGUMENTS --core1-aac ${ECHO_CORE1_AAC_BINARY})
+    list(APPEND ECHO_CORE1_AAC_DEPENDENCY ${ECHO_CORE1_AAC_BINARY})
+endif()
+set(ECHO_CORE1_OPUS_ARGUMENTS "")
+set(ECHO_CORE1_OPUS_DEPENDENCY "")
+if(ECHO_FEATURE_OGG)
+    list(APPEND ECHO_CORE1_OPUS_ARGUMENTS --core1-opus ${ECHO_CORE1_OPUS_BINARY})
+    list(APPEND ECHO_CORE1_OPUS_DEPENDENCY ${ECHO_CORE1_OPUS_BINARY})
+endif()
+
 set(ECHO_FIRMWARE_VERSION "0.12.0" CACHE STRING "major.minor.patch written to the image header")
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(ECHO_DEVICE_IMAGE ${CMAKE_BINARY_DIR}/HIFIEC90.IMG)
@@ -388,17 +414,17 @@ add_custom_target(echo_device_image ALL
         ${ECHO_READER_OVERLAY_ARGUMENTS}
         --core1-mp3 ${ECHO_CORE1_MP3_BINARY}
         --core1-flac ${ECHO_CORE1_BINARY}
-        --core1-aac ${ECHO_CORE1_AAC_BINARY}
-        --core1-opus ${ECHO_CORE1_OPUS_BINARY}
+        ${ECHO_CORE1_AAC_ARGUMENTS}
+        ${ECHO_CORE1_OPUS_ARGUMENTS}
         ${ECHO_GLYPH_FACE_ARGUMENTS}
         --output ${ECHO_DEVICE_IMAGE}
     COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/size_report.py
-        --build ${CMAKE_BINARY_DIR} --summary --nm ${CMAKE_NM}
+        --build ${CMAKE_BINARY_DIR} --summary --check --nm ${CMAKE_NM}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ECHO_DEVICE_IMAGE}
         ${CMAKE_BINARY_DIR}/MINIV898.IMG
     BYPRODUCTS ${ECHO_DEVICE_IMAGE} ${CMAKE_BINARY_DIR}/MINIV898.IMG
     DEPENDS echo_device echo_rescan_overlay echo_usb_overlay ${ECHO_READER_OVERLAY_DEP} ${ECHO_CORE1_MP3_BINARY} ${ECHO_CORE1_BINARY}
-        ${ECHO_CORE1_AAC_BINARY} ${ECHO_CORE1_OPUS_BINARY}
+        ${ECHO_CORE1_AAC_DEPENDENCY} ${ECHO_CORE1_OPUS_DEPENDENCY}
         ${PROJECT_SOURCE_DIR}/tools/make_image.py
     VERBATIM
 )
