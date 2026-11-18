@@ -4,13 +4,13 @@ This covers installing builds you made yourself. Release users should follow `do
 
 ## First install
 
-The first install goes through FiiO's own updater, as in the user guide: copy `HIFIEC90.IMG` (from `build/device/` or `build/release/`) to the top level of internal storage while FiiO's firmware runs, eject, unplug, take the microSD card out and restart. It has worked from FiiO 3.7.0 and 3.9.0 with the file copied from Windows.
+The first install goes through FiiO's own updater, as in the user guide: copy the image for your model — `HIFIEC90.IMG` for the 8 GB model or `MINIV898.IMG` for the 512 MB model (both from `build/device/` or `build/release/`) — to the top level of internal storage while FiiO's firmware runs, eject, unplug, take the microSD card out and restart. It has worked from FiiO 3.7.0 and 3.9.0 on the 8 GB model with the file copied from Windows. On the 512 MB model the development first installs went through maskrom (below); the updater installed a later release build once EchoPod was running.
 
 ### Fallback: a direct maskrom write
 
-If FiiO's updater won't take the file, maskrom can write the image straight into both firmware slots. Each slot holds the image's first `0x500000` bytes. On the unit tested, slot 1 is rockusb sector 0 and slot 2 is rockusb sector 69632 (`0x11000`); check yours by reading both headers first (`rl 0 1` and `rl 69632 1` must both show `RKnanoFW` at `0x1F8`).
+If FiiO's updater won't take the file, maskrom can write the image straight into both firmware slots. Each slot holds the image's first `0x500000` bytes. On the 8 GB unit tested, slot 1 is rockusb sector 0 and slot 2 is rockusb sector 69632 (`0x11000`); on the 512 MB unit, slot 2 is rockusb sector 65536 (`0x10000`). Check yours by reading both headers first (`rl 0 1` and `rl <slot 2> 1` must both show `RKnanoFW` at `0x1F8`).
 
-1. Build and cut the slot contents:
+1. Build and cut the slot contents (use `MINIV898.IMG` on the 512 MB model):
 
    ```sh
    cmake --preset device && cmake --build --preset device
@@ -28,19 +28,19 @@ If FiiO's updater won't take the file, maskrom can write the image straight into
    ./rkdeveloptool rl 0 1 s1.bin && ./rkdeveloptool rl 69632 1 s2.bin
    ```
 
-   Both read-backs must equal the first 512 bytes of `slot.bin`.
+   Both read-backs must equal the first 512 bytes of `slot.bin`. On the 512 MB model write and read sector 65536 instead of 69632.
 4. `./rkdeveloptool rd`. The player starts EchoPod.
 
 ## Later updates: EchoPod's own updater
 
 1. Connect the player. It shows "Computer found", and two drives appear: internal storage ("ECHO MINI") and the SD card.
-2. Copy the new image to the top level of internal storage and check it:
+2. Copy the new image to the top level of internal storage and check it (`MINIV898.IMG` instead of `HIFIEC90.IMG` on the 512 MB model):
    - Windows (PowerShell): `Copy-Item build\device\HIFIEC90.IMG E:\` then `Get-FileHash E:\HIFIEC90.IMG`, with E: the internal drive.
    - macOS: `cp -X build/device/HIFIEC90.IMG "/Volumes/ECHO MINI/"`, then `rm -f "/Volumes/ECHO MINI/._HIFIEC90.IMG"` and `shasum -a 256` on both copies.
-3. Eject both drives. The player shows "Checking HIFIEC90.IMG", then "Installing update" with a percentage, then "Update installed".
+3. Eject both drives. The player shows "Checking <the image's name>", then "Installing update" with a percentage, then "Update installed".
 4. Unplug, hold Power to switch off, then switch on. The new build starts.
 
-The updater takes the highest-numbered `HIFIECnn.IMG`. It checks the image's shape, rows, entry vector, header copy and CRC before writing, skips an image that is already installed, and writes slot 2 first, then slot 1, reading back every chunk. It also accepts FiiO's own 8 GB image (see "Going back to FiiO's firmware" in the user guide) and refuses the 512 MB model's.
+The updater scans `HIFIEC00`–`HIFIEC97` and `ECHOMINI.IMG` on the 8 GB model and `MINIV300`–`MINIV898` on the 512 MB model, and takes the highest-numbered file. It checks the image's shape, rows, entry vector, header copy and CRC before writing, skips an image that is already installed, and writes slot 2 first, then slot 1, reading back every chunk. It also accepts FiiO's own stock image for the model it detects (8 GB `HIFIECnn.IMG`, 512 MB `MINIVnnn.IMG`) and refuses the other model's.
 
 ## What to check after an install
 

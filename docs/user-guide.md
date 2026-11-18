@@ -2,31 +2,31 @@
 
 EchoPod is a replacement firmware for the Snowsky (FiiO) Echo Mini music player. It has a Cover Flow album browser, a music library built on the player, favorites, playlists and an Up Next queue. It is not made or supported by FiiO.
 
-Read `docs/known-issues.md` before you install. EchoPod has been tested on one player so far.
+Read `docs/known-issues.md` before you install. EchoPod has been tested on one 8 GB player and one 512 MB player so far.
 
 **Use it at your own risk.** EchoPod comes with no warranty (see `LICENSE`). Replacing a player's firmware can leave it unable to start; during development that happened, and the player was brought back through maskrom (`docs/device-recovery.md`). Only install it if you're prepared to do that.
 
 ## Which players
 
-- **Echo Mini 8 GB: supported.** Its FiiO update file is called `HIFIECnn.IMG`.
-- **Echo Mini 512 MB: not supported.** Its FiiO update file is called `MINIVnnn.IMG`. Its firmware ignores EchoPod's file, and EchoPod refuses its firmware.
+- **Echo Mini 8 GB: supported.** Its FiiO update file is called `HIFIECnn.IMG`; EchoPod's is `HIFIEC90.IMG`.
+- **Echo Mini 512 MB: supported by this build.** Its FiiO update file is called `MINIVnnn.IMG`; EchoPod's is `MINIV898.IMG`. Its internal storage is SD NAND, which EchoPod detects at boot. On the unit tested, EchoPod installs and starts, the UI, fonts and language packs load, the internal volume mounts and the updater works. The library scan and playback from internal storage haven't been tried. If FiiO's 512 MB updater refuses EchoPod's file, the maskrom path in `docs/device-install.md` installs it. The 512 MB work is in this fork; its pull request (93) is still open upstream.
 
-Tested starting points: FiiO firmware 3.7.0, 3.9.0 and 4.0.0 (Settings → About on the player shows yours).
+Tested starting points: FiiO firmware 3.7.0, 3.9.0 and 4.0.0 on the 8 GB model, and 4.0.0 on the 512 MB model (Settings → About on the player shows yours).
 
 ## Before you install
 
 1. Copy anything you want to keep off the player's internal storage.
 2. Charge the battery.
-3. Download `HIFIEC90.IMG` and `SHA256SUMS.txt` from the [EchoPod releases](https://github.com/BasilSkyWalk/echopod/releases), and check the file:
-   - Windows (PowerShell): `Get-FileHash HIFIEC90.IMG`
-   - macOS or Linux: `shasum -a 256 HIFIEC90.IMG`
+3. Download the image for your player and `SHA256SUMS.txt` from the [EchoPod releases](https://github.com/BasilSkyWalk/echopod/releases), and check the file: `HIFIEC90.IMG` for the 8 GB model, `MINIV898.IMG` for the 512 MB model. A release that carries only `HIFIEC90.IMG` can be built from source (`README.md`), which writes both names.
+   - Windows (PowerShell): `Get-FileHash HIFIEC90.IMG` (or `Get-FileHash MINIV898.IMG`)
+   - macOS or Linux: `shasum -a 256 HIFIEC90.IMG` (or `shasum -a 256 MINIV898.IMG`)
 
-   The result must match the line for `HIFIEC90.IMG` in `SHA256SUMS.txt`. If it doesn't, download it again.
+   The result must match the line for that file in `SHA256SUMS.txt`. If it doesn't, download it again.
 
 ## Install
 
 1. Connect the player to your computer. The internal storage appears as a drive called ECHO MINI.
-2. Copy `HIFIEC90.IMG` to the top level of that drive, not into a folder. Delete any other `HIFIECnn.IMG` or `ECHOMINI.IMG` file there first: the player installs the one with the highest number.
+2. Copy the image for your player to the top level of that drive, not into a folder: `HIFIEC90.IMG` on the 8 GB model, `MINIV898.IMG` on the 512 MB model. Delete any other image the player might pick first: other `HIFIECnn.IMG` or `ECHOMINI.IMG` files on the 8 GB model, other `MINIVnnn.IMG` files on the 512 MB model.
 3. Eject the drive (Windows: Safely Remove; macOS: Eject), then unplug.
 4. Take the microSD card out.
 5. Switch the player off and on again. It shows "Updating, Don't power off" for about a minute or two. Leave it alone until EchoPod starts.
@@ -315,22 +315,22 @@ The player keeps a log of the songs you play in `/.echo/history.bin` on the card
 
 ## Updating EchoPod
 
-1. Copy the new `HIFIEC90.IMG` to the top level of internal storage.
+1. Copy the new image to the top level of internal storage: `HIFIEC90.IMG` on the 8 GB model, `MINIV898.IMG` on the 512 MB model.
 2. Eject both drives. The player checks the file and shows "Installing update", then "Update installed".
 3. Unplug, then hold Power to turn the player off, and switch it on again.
 
 ## Going back to FiiO's firmware
 
-1. Download FiiO's firmware for the **8 GB** Echo Mini from FiiO's website and unzip it.
-2. Delete `HIFIEC90.IMG` from internal storage if it's still there.
-3. Copy FiiO's `HIFIECnn.IMG` (for example `HIFIEC40.IMG`) to the top level of internal storage, unchanged. Don't copy the `MINIVnnn.IMG` file from the same zip: that one is for the 512 MB model, and EchoPod refuses it.
+1. Download FiiO's firmware for your model (8 GB or 512 MB) from FiiO's website and unzip it.
+2. Delete EchoPod's image from internal storage if it's still there: `HIFIEC90.IMG` on the 8 GB model, `MINIV898.IMG` on the 512 MB model.
+3. Copy FiiO's image for the same model to the top level of internal storage, unchanged: `HIFIECnn.IMG` (for example `HIFIEC40.IMG`) on the 8 GB model, `MINIVnnn.IMG` (for example `MINIV400.IMG`) on the 512 MB model. EchoPod accepts FiiO's image only for the model it detects; the other model's file is refused as "isn't a valid image for this player" with code E5.
 4. Eject both drives. The player checks the file (this takes a while) and shows "Installing FiiO firmware", then "FiiO firmware installed".
 5. Unplug, take the microSD card out, hold Power to turn the player off, and switch it on. FiiO's firmware starts, shows "Updating" once more for a minute or two while it installs the same file, and deletes it.
 
 ## If something goes wrong
 
-- **"isn't a valid image for this player" when going back to FiiO:** check that you copied the `HIFIECnn.IMG` file, not `MINIVnnn.IMG`, and that it's unchanged (its hash matches the one in FiiO's zip). EchoPod 0.2.0 and earlier also refuse FiiO's 4.0.0 firmware: update EchoPod first, or install FiiO 3.9.0 (`HIFIEC39.IMG`) and then FiiO's own update to 4.0.0. To switch to another custom firmware, go back to FiiO's first: EchoPod only installs its own images and FiiO's.
-- **The install doesn't take** (FiiO's firmware comes back after a short "Updating"): copy the file again, check its hash on the player's drive, and make sure it's the only `HIFIECnn.IMG` there. If it keeps failing, the only other way in is maskrom (below).
+- **"isn't a valid image for this player" when going back to FiiO:** check that you copied the file for your model (`HIFIECnn.IMG` on the 8 GB model, `MINIVnnn.IMG` on the 512 MB model), not the other model's, and that it's unchanged (its hash matches the one in FiiO's zip). A wrong model is refused with code E5. EchoPod 0.2.0 and earlier also refuse FiiO's 4.0.0 firmware: update EchoPod first, or install FiiO 3.9.0 (`HIFIEC39.IMG`) and then FiiO's own update to 4.0.0. To switch to another custom firmware, go back to FiiO's first: EchoPod only installs its own images and FiiO's.
+- **The install doesn't take** (FiiO's firmware comes back after a short "Updating"): copy the file again, check its hash on the player's drive, and make sure it's the only image there for your model (`HIFIECnn.IMG` on the 8 GB model, `MINIVnnn.IMG` on the 512 MB model). If it keeps failing, the only other way in is maskrom (below).
 - **The player doesn't start at all:** every case so far was recovered through the chip's maskrom mode, which writes FiiO's firmware back from a computer over USB. It needs a patched `rkdeveloptool` and some care; the steps are in `docs/device-recovery.md`.
 - **A "STALL" or "FAULT" screen** (white text on black with PC and LR lines): photograph it, then press the small RST hole rather than holding Power. RST keeps the player's memory, so Home → Diagnostics → Last start and Last stack still show what stopped; holding Power on battery wipes it.
 - **The player doesn't turn on after an update:** press RST once and start it; then photograph Home → Diagnostics → Last update (what the installer did and the state it left the internal storage in), Last start ("#n after power-off" means the player never lost power when you switched it off) and Boot hold if present.

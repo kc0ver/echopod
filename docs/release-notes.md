@@ -5,6 +5,11 @@
 ### New
 
 - **Shuffle all in folders.** Every folder that holds songs, either its own or in its immediate subfolders, starts with **Shuffle all**. It plays those songs shuffled and leaves songs in deeper folders out. The top-level Folders list has no Shuffle all, and audiobooks and podcasts don't get one. The list still opens on the first song.
+- **512 MB Echo Mini support.** The 512 MB unit's internal storage is SD NAND on the eMMC controller, behind a 4 MiB (`0x2000`-sector) prefix that the Rockchip tools don't show. EchoPod now detects it at boot, addresses its slots and internal FAT volume from that base, mounts the internal volume and updates from `MINIV898.IMG`. Checked on one 512 MB unit: a maskrom install starts the UI with the fonts and language packs, the internal volume mounts and a release build installs through the updater. The library scan and playback from internal storage, and the 8 GB model with this build, haven't been checked on hardware. The storage work is pull request 93.
+
+### Fixed
+
+- **Power-off on the 512 MB model** stops the audio engine and core 1, forces the DAC off, sleeps the panel and settles for 2 s before dropping the power hold pin, as FiiO's firmware does. Dropping it at once left the supply latched, so the power key could not start the player until RST.
 
 ## 0.12.0
 

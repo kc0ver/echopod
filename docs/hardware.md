@@ -18,8 +18,9 @@ A short map of the hardware EchoPod drives, for reading the code in `platform/de
 
 ## Storage
 
-- 8 GB eMMC on the DW-MMC controller. From the start: the ID block, firmware slot 1, firmware slot 2, a SAVE block, then the FAT32 user volume that appears as "ECHO MINI" over USB. EchoPod never writes the ID block, the SAVE block or the gap between them.
-- Each firmware slot holds the first 5 MiB of a firmware image. On the unit tested, slot 1 is at rockusb sector 0 and slot 2 at rockusb sector 69632.
+- **8 GB model:** eMMC on the DW-MMC controller. From the start: the ID block, firmware slot 1, firmware slot 2, a SAVE block, then the FAT32 user volume that appears as "ECHO MINI" over USB. EchoPod never writes the ID block, the SAVE block or the gap between them.
+- Each firmware slot holds the first 5 MiB of a firmware image. On the 8 GB unit tested, slot 1 is at rockusb sector 0 and slot 2 at rockusb sector 69632.
+- **512 MB model:** SD NAND on the same controller, spoken to with the SD protocol (CMD1 gets no answer). The card has a 4 MiB (`0x2000`-sector) reserved prefix that the Rockchip tool and BootROM don't show, so the SD command address is the tool address plus `0x2000`: slot 1 at SD LBA `0x2000` (tool sector 0), slot 2 at `0x12000` (tool sector 65536), both 32 MiB; the MBR is at `0x88000` and the FAT32 volume at `0x88040`. The card reports `0xF0000` sectors and the tools see `0xEE000`. See `docs/512mb-storage-port.md`.
 - A microSD slot on the same kind of controller, with card detect. EchoPod reads and writes FAT16, FAT32 and exFAT.
 
 ## Audio
@@ -47,5 +48,5 @@ A short map of the hardware EchoPod drives, for reading the code in `platform/de
 
 ## Firmware image
 
-- `HIFIEC90.IMG` is a 5 MiB `RKnanoFW` container: an outer header, a table of load rows, the code and data, a copy of the first 512 bytes at `0x44C000` and a CRC-32 trailer at `0x500000`. `tools/make_image.py` builds it, and `docs/architecture.md` describes the layout.
-- FiiO's firmware installs the highest-numbered `HIFIECnn.IMG` it finds at the top level of internal storage. FiiO's own images are 32 MiB.
+- `HIFIEC90.IMG` (and the byte-identical `MINIV898.IMG`) is a 5 MiB `RKnanoFW` container: an outer header, a table of load rows, the code and data, a copy of the first 512 bytes at `0x44C000` and a CRC-32 trailer at `0x500000`. `tools/make_image.py` builds it, and `docs/architecture.md` describes the layout.
+- FiiO's firmware installs the highest-numbered image it finds at the top level of internal storage: `HIFIECnn.IMG` on the 8 GB model, `MINIVnnn.IMG` on the 512 MB model. FiiO's own images are 32 MiB.

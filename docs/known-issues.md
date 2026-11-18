@@ -1,6 +1,6 @@
 # EchoPod known issues
 
-EchoPod is early firmware made by one person and tested on one player. It comes with no warranty: use it at your own risk. Read this before you install, and keep a way back (see "If something goes wrong" in `docs/user-guide.md`).
+EchoPod is early firmware made by one person and tested on two players: one 8 GB Echo Mini and one 512 MB Echo Mini. It comes with no warranty: use it at your own risk. Read this before you install, and keep a way back (see "If something goes wrong" in `docs/user-guide.md`).
 
 ## Safety
 
@@ -10,10 +10,10 @@ EchoPod is early firmware made by one person and tested on one player. It comes 
 
 ## Installing
 
-- **Tested on one player.** One Echo Mini 8 GB, starting from FiiO firmware 3.7.0, 3.9.0 and 4.0.0, installed from Windows 11. Other units, other FiiO versions and other computers haven't been tried.
+- **Tested on two players.** One Echo Mini 8 GB (FiiO firmware 3.7.0, 3.9.0 and 4.0.0, installed from Windows 11) and one 512 MB Echo Mini (FiiO 4.0.0). Other units, other FiiO versions and other computers haven't been tried.
 - **Installing from a Mac is unproven.** Earlier attempts to copy an image from a Mac with FiiO's firmware running were refused (FiiO's firmware showed "Updating" for under a second and kept itself). The cause isn't known. Install from Windows if you can.
-- **The 512 MB Echo Mini isn't supported.** EchoPod refuses its firmware, and its firmware ignores EchoPod's file.
-- **Going back to FiiO's firmware** is checked with FiiO's 8 GB 3.7.0, 3.8.0, 3.9.0 and 4.0.0 images, and 0.3.0 installed FiiO 4.0.0 on the player and was installed back from it (EchoPod 0.2.0 refuses 4.0.0, see `docs/user-guide.md`). Another custom firmware can't be installed from EchoPod: go back to FiiO's first.
+- **The 512 MB Echo Mini is supported by this build.** Its internal storage is SD NAND on the eMMC controller, hidden behind a 4 MiB (`0x2000`-sector) prefix that the Rockchip tools don't show; EchoPod detects it at boot and addresses the slots and the FAT volume from that base (`docs/512mb-storage-port.md`). On the 512 MB unit tested, EchoPod installs and starts, the UI, fonts and language packs load, the internal volume mounts and the updater works. **Not yet tested on hardware:** the library scan and playback from internal storage, and the 8 GB model with this build. The 512 MB work is in this fork; its pull request (93) is still open upstream.
+- **Going back to FiiO's firmware** is checked with FiiO's 8 GB 3.7.0, 3.8.0, 3.9.0 and 4.0.0 images, and 0.3.0 installed FiiO 4.0.0 on the player and was installed back from it (EchoPod 0.2.0 refuses 4.0.0, see `docs/user-guide.md`). The 512 MB model's stock image is accepted by the updater's model check in tests; it hasn't been installed back on a 512 MB player yet. Another custom firmware can't be installed from EchoPod: go back to FiiO's first.
 - **If the player doesn't start at all,** the only recovery known is the chip's maskrom mode (`docs/device-recovery.md`). It works, but it needs a patched tool and care.
 
 ## USB
