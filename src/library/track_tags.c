@@ -18,8 +18,16 @@ static const FormatName FORMATS[] = {
 #if ECHO_FEATURE_MP4
     {"m4a", TAG_FORMAT_MP4},   {"m4b", TAG_FORMAT_MP4},
 #endif
-    {"wav", TAG_FORMAT_WAV},   {"wma", TAG_FORMAT_WMA},  {"ape", TAG_FORMAT_APE},
-    {"dsf", TAG_FORMAT_DSF},   {"dff", TAG_FORMAT_DFF},  {"qoa", TAG_FORMAT_QOA},
+#if ECHO_FEATURE_WAV
+    {"wav", TAG_FORMAT_WAV},
+#endif
+#if ECHO_FEATURE_EXTRA_INDEX
+    {"wma", TAG_FORMAT_WMA},   {"ape", TAG_FORMAT_APE},
+    {"dsf", TAG_FORMAT_DSF},   {"dff", TAG_FORMAT_DFF},
+#endif
+#if ECHO_FEATURE_QOA
+    {"qoa", TAG_FORMAT_QOA},
+#endif
 };
 
 static char lower(char character)
@@ -318,8 +326,14 @@ static bool read_format(TagReader *reader, TagFormat format)
     case TAG_FORMAT_MP4:
         return false;
 #endif
+#if ECHO_FEATURE_WAV
     case TAG_FORMAT_WAV:
         return tags_read_wav(reader);
+#else
+    case TAG_FORMAT_WAV:
+        return false;
+#endif
+#if ECHO_FEATURE_EXTRA_INDEX
     case TAG_FORMAT_WMA:
         return tags_read_wma(reader);
     case TAG_FORMAT_APE:
@@ -328,8 +342,20 @@ static bool read_format(TagReader *reader, TagFormat format)
         return tags_read_dsf(reader);
     case TAG_FORMAT_DFF:
         return tags_read_dff(reader);
+#else
+    case TAG_FORMAT_WMA:
+    case TAG_FORMAT_APE:
+    case TAG_FORMAT_DSF:
+    case TAG_FORMAT_DFF:
+        return false;
+#endif
+#if ECHO_FEATURE_QOA
     case TAG_FORMAT_QOA:
         return tags_read_qoa(reader);
+#else
+    case TAG_FORMAT_QOA:
+        return false;
+#endif
     case TAG_FORMAT_UNKNOWN:
         return false;
     }

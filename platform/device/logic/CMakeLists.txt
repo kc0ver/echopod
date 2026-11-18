@@ -126,6 +126,12 @@ set(ECHO_DEVICE_LOGIC_SOURCES
     vbus_debounce.c
     wav_source.c
 )
+if(NOT ECHO_FEATURE_WAV)
+    list(REMOVE_ITEM ECHO_DEVICE_LOGIC_SOURCES wav_source.c)
+endif()
+if(NOT ECHO_FEATURE_QOA)
+    list(REMOVE_ITEM ECHO_DEVICE_LOGIC_SOURCES core1_qoa.c)
+endif()
 add_library(echo_device_logic STATIC ${ECHO_DEVICE_LOGIC_SOURCES})
 if(CMAKE_CROSSCOMPILING)
     set_source_files_properties(

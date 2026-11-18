@@ -2,8 +2,10 @@
 
 #include <stddef.h>
 
-#include "codec/qoa.h"
 #include "core/features.h"
+#if ECHO_FEATURE_QOA
+#include "codec/qoa.h"
+#endif
 #if ECHO_FEATURE_OGG
 #include "codec/ogg.h"
 #endif
@@ -844,6 +846,7 @@ AudioSource core1_source_ogg_interface(Core1Source *source)
 }
 #endif
 
+#if ECHO_FEATURE_QOA
 static bool open_qoa(void *context, const char *path, uint32_t start_ms, AudioTrackInfo *track)
 {
     Core1Source *source = context;
@@ -908,3 +911,4 @@ AudioSource core1_source_qoa_interface(Core1Source *source)
 {
     return (AudioSource){open_qoa, next_frame, release_frame, close_stream, source};
 }
+#endif

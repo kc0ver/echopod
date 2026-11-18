@@ -43,6 +43,22 @@
         "ECHO_FEATURE_BLUETOOTH": "OFF",
         "ECHO_FEATURE_EQUALIZER": "OFF"
       }
+    },
+    {
+      "name": "minimal",
+      "displayName": "Minimal firmware (Bluetooth only, no WAV, QOA, extra formats or release diagnostics)",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/minimal",
+      "cacheVariables": {
+        "ECHO_FEATURE_MP4": "OFF",
+        "ECHO_FEATURE_OGG": "OFF",
+        "ECHO_FEATURE_BLUETOOTH": "ON",
+        "ECHO_FEATURE_EQUALIZER": "OFF",
+        "ECHO_FEATURE_WAV": "OFF",
+        "ECHO_FEATURE_QOA": "OFF",
+        "ECHO_FEATURE_EXTRA_INDEX": "OFF",
+        "ECHO_RELEASE_VERSION_ONLY": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -61,6 +77,10 @@
     {
       "name": "slim",
       "configurePreset": "slim"
+    },
+    {
+      "name": "minimal",
+      "configurePreset": "minimal"
     }
   ],
   "testPresets": [

@@ -21,10 +21,17 @@ option(ECHO_FEATURE_MP4 "Include the MP4 container (m4a/m4b, AAC and ALAC)" ON)
 option(ECHO_FEATURE_OGG "Include Ogg/Opus playback" ON)
 option(ECHO_FEATURE_BLUETOOTH "Include Bluetooth audio" ON)
 option(ECHO_FEATURE_EQUALIZER "Include the equalizer" ON)
+option(ECHO_FEATURE_WAV "Include WAV playback and indexing" ON)
+option(ECHO_FEATURE_QOA "Include QOA playback and indexing" ON)
+option(ECHO_FEATURE_EXTRA_INDEX "Index WMA, APE, DSF and DFF" ON)
+option(ECHO_RELEASE_VERSION_ONLY "Show only the firmware version in the release Diagnostics menu" OFF)
 set(ECHO_APP_RAM_BUDGET_BYTES 131072 CACHE STRING "Static RAM budget for src/ on the device")
 
 message(STATUS "EchoPod features: MP4=${ECHO_FEATURE_MP4} OGG=${ECHO_FEATURE_OGG} "
-               "Bluetooth=${ECHO_FEATURE_BLUETOOTH} Equalizer=${ECHO_FEATURE_EQUALIZER}")
+               "Bluetooth=${ECHO_FEATURE_BLUETOOTH} Equalizer=${ECHO_FEATURE_EQUALIZER} "
+               "WAV=${ECHO_FEATURE_WAV} QOA=${ECHO_FEATURE_QOA} "
+               "ExtraIndex=${ECHO_FEATURE_EXTRA_INDEX} "
+               "VersionOnly=${ECHO_RELEASE_VERSION_ONLY}")
 
 include(cmake/project_options.cmake)
 

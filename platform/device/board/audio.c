@@ -85,7 +85,9 @@ static union {
     WavBuffers wav;
 } decoding __attribute__((section(".high_ram")));
 static uint32_t music_ring[RING_WORDS];
+#if ECHO_FEATURE_WAV
 static WavSource wav_source;
+#endif
 static SourceKind source_kind;
 static bool unknown_format;
 static FlacSource software_source;
@@ -193,11 +195,13 @@ static bool tag_is(const uint8_t *bytes, const char *tag)
            bytes[2] == (uint8_t)tag[2] && bytes[3] == (uint8_t)tag[3];
 }
 
+#if ECHO_FEATURE_WAV
 static uint32_t le32_at(const uint8_t *bytes)
 {
     return (uint32_t)bytes[0] | (uint32_t)bytes[1] << 8 | (uint32_t)bytes[2] << 16 |
            (uint32_t)bytes[3] << 24;
 }
+#endif
 
 #if ECHO_FEATURE_MP4
 static TrackProbe probe_mp4(FlacInput input)
@@ -229,14 +233,18 @@ static TrackProbe probe_header(const uint8_t *magic, bool read)
         return (TrackProbe){SOURCE_FLAC, (uint32_t)rate[0] << 12 | (uint32_t)rate[1] << 4 |
                                              (uint32_t)rate[2] >> 4};
     }
+#if ECHO_FEATURE_QOA
     if (tag_is(magic, "qoaf")) {
         return (TrackProbe){SOURCE_QOA, (uint32_t)magic[9] << 16 | (uint32_t)magic[10] << 8 |
                                             (uint32_t)magic[11]};
     }
+#endif
+#if ECHO_FEATURE_WAV
     if (tag_is(magic, "RIFF") && tag_is(magic + 8, "WAVE")) {
         bool format_first = tag_is(magic + WAV_FORMAT_OFFSET, "fmt ");
         return (TrackProbe){SOURCE_WAV, format_first ? le32_at(magic + WAV_RATE_OFFSET) : 0};
     }
+#endif
     return (TrackProbe){mp3_signature(magic) ? SOURCE_MP3 : SOURCE_UNKNOWN, 0};
 }
 
@@ -293,9 +301,11 @@ static Core1Program program_for(SourceKind kind)
 
 static AudioSource chosen_source(void)
 {
+#if ECHO_FEATURE_WAV
     if (source_kind == SOURCE_WAV) {
         return wav_source_interface(&wav_source);
     }
+#endif
     if (source_kind == SOURCE_MP3) {
         return core1_source_mp3_interface(&core1_source);
     }
@@ -309,9 +319,11 @@ static AudioSource chosen_source(void)
         return core1_source_ogg_interface(&core1_source);
     }
 #endif
+#if ECHO_FEATURE_QOA
     if (source_kind == SOURCE_QOA) {
         return core1_source_qoa_interface(&core1_source);
     }
+#endif
     return using_core1 ? core1_source_interface(&core1_source)
                        : flac_source_interface(&software_source);
 }
@@ -397,7 +409,9 @@ static void ensure_engine(void)
     core1_source_init(&core1_source, core1_region(), files, &decoding.flac.decoder,
                       FILL_BUDGET_BYTES);
     core1_source_set_wake(&core1_source, signal_core1);
+#if ECHO_FEATURE_WAV
     wav_source_init(&wav_source, files, &decoding.wav);
+#endif
     AudioSource source = {open_chosen, next_chosen, release_chosen, close_chosen, NULL};
     audio_engine_init(
         &engine, (AudioEngineConfig){.source = source, .ring = ring(), .ring_words = RING_WORDS});

@@ -9,7 +9,7 @@ C_SUFFIXES = {".c", ".h"}
 CMAKE_SUFFIXES = {".cmake"}
 CMAKE_FILE_NAMES = {"CMakeLists.txt"}
 PYTHON_SUFFIXES = {".py"}
-SKIPPED_DIRECTORIES = {"build", "external", "third_party"}
+SKIPPED_DIRECTORIES = {"build", "external", "third_party", "ignore"}
 C_LITERAL = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'')
 CMAKE_STRING = re.compile(r'"(?:\\.|[^"\\])*"')
 

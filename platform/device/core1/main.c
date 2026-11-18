@@ -5,7 +5,9 @@
 #include "codec/alac.h"
 #endif
 #include "codec/flac.h"
+#if ECHO_FEATURE_QOA
 #include "codec/qoa.h"
+#endif
 #include "core/features.h"
 #include "core1_region.h"
 #include "core1_ticks.h"
@@ -13,7 +15,9 @@
 #include "device/core1_alac.h"
 #endif
 #include "device/core1_control.h"
+#if ECHO_FEATURE_QOA
 #include "device/core1_qoa.h"
+#endif
 #include "device/flac_accel.h"
 #include "device/tick_clock.h"
 #include "hal/system.h"
@@ -26,8 +30,10 @@
 _Static_assert(sizeof(AlacDecoder) <= sizeof(int32_t[FLAC_MAX_BLOCK]),
                "the ALAC decoder must fit in the FLAC program's second bank");
 #endif
+#if ECHO_FEATURE_QOA
 _Static_assert(sizeof(QoaDecoder) <= sizeof(int32_t[FLAC_MAX_BLOCK]),
                "the QOA decoder must fit in the FLAC program's second bank");
+#endif
 
 void core1_main(void);
 
@@ -36,7 +42,9 @@ static Core1Flac flac;
 #if ECHO_FEATURE_MP4
 static Core1Alac alac;
 #endif
+#if ECHO_FEATURE_QOA
 static Core1Qoa qoa;
+#endif
 static Core1Decoder flac_stream;
 static FlacLpcHook lpc_hook;
 static AccelHook accel_hook;
@@ -173,8 +181,10 @@ void core1_main(void)
         &stream, STREAM_CODEC_ALAC,
         core1_alac_decoder(&alac, (AlacDecoder *)(uintptr_t)CORE1_FLAC_BANK_1));
 #endif
+#if ECHO_FEATURE_QOA
     core1_stream_set_decoder(&stream, STREAM_CODEC_QOA,
                              core1_qoa_decoder(&qoa, (QoaDecoder *)(uintptr_t)CORE1_FLAC_BANK_1));
+#endif
 #if ECHO_FEATURE_EQUALIZER
     core1_stream_set_equalizer(&stream, &equalizer,
                                (volatile Core1EqualizerShare *)(uintptr_t)CORE1_SHARED_EQUALIZER);

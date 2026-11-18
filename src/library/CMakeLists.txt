@@ -22,7 +22,7 @@ target_link_libraries(echo_library
     PRIVATE echo_options echo_compact
 )
 
-add_library(echo_library_scan STATIC
+set(ECHO_LIBRARY_SCAN_SOURCES
     builder_sort.c
     builder_store.c
     cover_build.c
@@ -49,6 +49,16 @@ add_library(echo_library_scan STATIC
     track_fields.c
     track_tags.c
 )
+if(NOT ECHO_FEATURE_EXTRA_INDEX)
+    list(REMOVE_ITEM ECHO_LIBRARY_SCAN_SOURCES tags_ape.c tags_asf.c)
+endif()
+if(NOT ECHO_FEATURE_QOA)
+    list(REMOVE_ITEM ECHO_LIBRARY_SCAN_SOURCES tags_qoa.c)
+endif()
+if(NOT ECHO_FEATURE_WAV AND NOT ECHO_FEATURE_EXTRA_INDEX)
+    list(REMOVE_ITEM ECHO_LIBRARY_SCAN_SOURCES tags_riff.c)
+endif()
+add_library(echo_library_scan STATIC ${ECHO_LIBRARY_SCAN_SOURCES})
 target_include_directories(echo_library_scan PUBLIC include)
 target_link_libraries(echo_library_scan
     PUBLIC echo_core echo_image echo_library

@@ -2,11 +2,13 @@
 
 #include <stddef.h>
 
+#include "core/features.h"
 #include "core/i18n.h"
 #include "diagnostics_rows.h"
 
 enum {
-    RELEASE_DIAGNOSTICS_COUNT = 17
+    RELEASE_DIAGNOSTICS_COUNT = 17,
+    RELEASE_VERSION_COUNT = 1
 };
 
 static MenuItem value_item(StringId label, const char *(*value)(const void *context))
@@ -14,16 +16,23 @@ static MenuItem value_item(StringId label, const char *(*value)(const void *cont
     return (MenuItem){.label = i18n_text(label), .select = NULL, .context = NULL, .value = value};
 }
 
+#if !ECHO_RELEASE_VERSION_ONLY
 static MenuItem action_item(StringId label, ScreenAction (*select)(void *context),
                             const char *(*value)(const void *context))
 {
     return (MenuItem){.label = i18n_text(label), .select = select, .context = NULL, .value = value};
 }
+#endif
 
 void diagnostics_menu_build(AppScreens *screens, AppOptions *options, const Theme *theme)
 {
     (void)options;
     MenuItem *items = screens->diagnostics_items;
+#if ECHO_RELEASE_VERSION_ONLY
+    items[0] = value_item(STR_DIAG_FIRMWARE, diagnostics_row_firmware);
+    app_screens_build_menu(&screens->diagnostics, i18n_text(STR_DIAG_FIRMWARE), items,
+                           RELEASE_VERSION_COUNT, theme);
+#else
     items[0] = app_screens_open_item(i18n_text(STR_DIAG_KEY_TEST),
                                      test_pattern_screen_init(&screens->test_pattern));
     items[1] = value_item(STR_DIAG_FIRMWARE, diagnostics_row_firmware);
@@ -45,4 +54,5 @@ void diagnostics_menu_build(AppScreens *screens, AppOptions *options, const Them
         action_item(STR_DIAG_SAVINGS, diagnostics_row_savings_next, diagnostics_row_savings);
     app_screens_build_menu(&screens->diagnostics, i18n_text(STR_DIAG_TITLE), items,
                            RELEASE_DIAGNOSTICS_COUNT, theme);
+#endif
 }
