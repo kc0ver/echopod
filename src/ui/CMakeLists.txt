@@ -23,3 +23,6 @@ target_link_libraries(echo_ui
     PUBLIC echo_core echo_gfx
     PRIVATE echo_options echo_compact echo_lto
 )
+if(ECHO_LIST_ANIMATION)
+    target_compile_definitions(echo_ui PUBLIC ECHO_LIST_ANIMATION=1)
+endif()

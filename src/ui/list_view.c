@@ -4,8 +4,11 @@
 
 #include "gfx/text.h"
 #include "ui/label.h"
+#include "ui/marquee.h"
 
 enum {
+    LIST_SELECTION_ANIMATION_MS = 120,
+    LIST_ANIMATION_FRAME_MS = 16,
     MIN_THUMB_HEIGHT = 6,
     SHINE_HEIGHT = 1,
     OUTLINE_SIDE_INSET = 6,
@@ -88,7 +91,47 @@ void list_view_init(ListView *view, const ListModel *model, const Theme *theme, 
         .selection_changed_ms = now_ms,
         .section_row = -1,
     };
+#if ECHO_LIST_ANIMATION
+    view->animation_ms = LIST_SELECTION_ANIMATION_MS;
+#endif
 }
+
+#if ECHO_LIST_ANIMATION
+static int animation_shift(const ListView *view, uint32_t now_ms)
+{
+    if (view->animation_ms == 0 || !view->animating) {
+        return 0;
+    }
+    uint32_t elapsed = now_ms - view->animation_start_ms;
+    if (elapsed >= view->animation_ms) {
+        return 0;
+    }
+    uint32_t remaining = view->animation_ms - elapsed;
+    marquee_frame_request(LIST_ANIMATION_FRAME_MS);
+    return (int)((int64_t)view->animation_from * remaining * remaining /
+                 ((int64_t)view->animation_ms * view->animation_ms));
+}
+
+static void start_animation(ListView *view, int old_selected, int old_top, int target,
+                            uint32_t now_ms)
+{
+    if (view->animation_ms == 0) {
+        return;
+    }
+    if (target - old_selected > 1 || target - old_selected < -1) {
+        view->animating = false;
+        return;
+    }
+    int shift =
+        (old_selected - old_top - (view->selected - view->top)) * view->theme->metrics.row_height;
+    if (view->animating) {
+        shift += animation_shift(view, now_ms);
+    }
+    view->animation_from = shift;
+    view->animation_start_ms = now_ms;
+    view->animating = shift != 0;
+}
+#endif
 
 static int section_at(const ListView *view, int index)
 {
@@ -123,9 +166,16 @@ void list_view_move(ListView *view, int delta, bool wrap, uint32_t now_ms)
     if (target == view->selected) {
         return;
     }
+#if ECHO_LIST_ANIMATION
+    int old_selected = view->selected;
+    int old_top = view->top;
+#endif
     view->selected = target;
     view->selection_changed_ms = now_ms;
     keep_selection_visible(view);
+#if ECHO_LIST_ANIMATION
+    start_animation(view, old_selected, old_top, target, now_ms);
+#endif
     note_section(view, now_ms);
 }
 
@@ -216,6 +266,9 @@ void list_view_select(ListView *view, int index, uint32_t now_ms)
     int target = index < 0 ? 0 : index >= count ? count - 1 : index;
     view->selected = target;
     view->selection_changed_ms = now_ms;
+#if ECHO_LIST_ANIMATION
+    view->animating = false;
+#endif
     keep_selection_visible(view);
     note_section(view, now_ms);
 }
@@ -325,9 +378,6 @@ static void draw_selection(const ListView *view, Canvas *canvas, Rect area)
 
 static void draw_row(const ListView *view, Canvas *canvas, Row row, uint32_t now_ms)
 {
-    if (row.selected) {
-        draw_selection(view, canvas, row.area);
-    }
     draw_label(view, canvas, draw_detail(view, canvas, draw_chevron(view, canvas, row)), now_ms);
 }
 
@@ -384,6 +434,16 @@ void list_view_draw(const ListView *view, Canvas *canvas, Rect area, uint32_t no
     if (item_count(view) > visible) {
         rows.width -= view->theme->metrics.scrollbar_width + view->theme->metrics.scrollbar_inset;
         draw_scrollbar(view, canvas, area, top);
+    }
+    if (item_count(view) > 0) {
+        int shift = 0;
+#if ECHO_LIST_ANIMATION
+        shift = animation_shift(view, now_ms);
+#endif
+        int bar_y = rows.y + (view->selected - top) * view->theme->metrics.row_height + shift;
+        Rect bar = {rows.x, bar_y, rows.width, view->theme->metrics.row_height};
+        Canvas clipped = canvas_clipped(canvas, rows);
+        draw_selection(view, &clipped, bar);
     }
     for (int position = 0; position < visible; position++) {
         Row row = make_row(view, rows, top, position);

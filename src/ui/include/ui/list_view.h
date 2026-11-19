@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "core/features.h"
 #include "gfx/canvas.h"
 #include "ui/theme.h"
 
@@ -40,6 +41,12 @@ typedef struct ListView {
     uint32_t section_jumped_ms;
     int section_row;
     int section;
+#if ECHO_LIST_ANIMATION
+    uint32_t animation_ms;
+    uint32_t animation_start_ms;
+    int animation_from;
+    bool animating;
+#endif
 } ListView;
 
 void list_view_init(ListView *view, const ListModel *model, const Theme *theme, uint32_t now_ms);
