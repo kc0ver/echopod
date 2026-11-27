@@ -17,6 +17,20 @@ enum {
 
 static const uint32_t SPREAD_MASK = 0x07E0F81Fu;
 
+enum {
+    LUMINANCE_RED_WEIGHT = 2126,
+    LUMINANCE_GREEN_WEIGHT = 7152,
+    LUMINANCE_BLUE_WEIGHT = 722,
+    CHANNEL_LIGHT_FULL = 255,
+    FIVE_TO_SIX_SHIFT = 4
+};
+
+static const uint8_t CHANNEL_LIGHT[] = {
+    0,   0,   1,   1,   1,   2,   2,   3,   4,   4,   5,   6,   8,   9,   10,  12,
+    13,  15,  17,  19,  21,  23,  25,  28,  30,  33,  36,  39,  42,  45,  49,  52,
+    57,  61,  65,  69,  73,  78,  82,  87,  92,  97,  103, 108, 114, 119, 125, 131,
+    139, 146, 152, 159, 166, 173, 181, 188, 196, 204, 212, 220, 229, 237, 246, 255};
+
 typedef struct Channels {
     unsigned red;
     unsigned green;
@@ -91,4 +105,18 @@ Color color_between(Color from, Color to, int step, int steps)
         .green = channel_between(first.green, last.green, step, steps),
         .blue = channel_between(first.blue, last.blue, step, steps),
     });
+}
+
+static unsigned five_bit_light(unsigned value)
+{
+    return CHANNEL_LIGHT[value << 1 | value >> FIVE_TO_SIX_SHIFT];
+}
+
+unsigned color_luminance(Color color)
+{
+    Channels channels = split(color);
+    uint32_t weighted = (uint32_t)LUMINANCE_RED_WEIGHT * five_bit_light(channels.red) +
+                        (uint32_t)LUMINANCE_GREEN_WEIGHT * CHANNEL_LIGHT[channels.green] +
+                        (uint32_t)LUMINANCE_BLUE_WEIGHT * five_bit_light(channels.blue);
+    return (unsigned)((weighted + CHANNEL_LIGHT_FULL / 2) / CHANNEL_LIGHT_FULL);
 }

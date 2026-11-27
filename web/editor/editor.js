@@ -2,7 +2,7 @@ import { buildAccents, shownAccent } from "./accent_editor.js";
 import { arrangeUpright } from "./arrange.js";
 import { buildFonts } from "./font_editor.js";
 import { buildIcons } from "./icon_editor.js";
-import { AREAS, colorOf, drawingScript, findElement, walk } from "./drawing.js";
+import { AREAS, colorOf, drawingScript, findElement, fitStretched, walk } from "./drawing.js";
 import { drawingEditor } from "./drawing_editor.js";
 import { STARTS, drawingFrom, faceOf, fitTiles, isTiles, plainPicture, standardDrawing, startDrawing, tileRows } from "./drawings.js";
 import { KEY, PLAYBACK, PLAYER, Preview, SONGS } from "./preview_host.js";
@@ -16,6 +16,7 @@ import {
   opacityPercent,
   pack,
   seeThroughOf,
+  textReadsInCoverFlow,
   toToml,
   unpack,
 } from "./theme_format.js";
@@ -233,7 +234,7 @@ function revived(design, screen) {
   if (drawing?.upright === "auto") {
     arrangeUpright(drawing);
   }
-  return drawing;
+  return drawing ? fitStretched(drawing) : null;
 }
 
 function restore(text) {
@@ -563,7 +564,7 @@ function tallPlaces(design) {
 function followed(design) {
   design.upright = "auto";
   arrangeUpright(design);
-  return design;
+  return fitStretched(design);
 }
 
 function settleUpright() {
@@ -572,6 +573,7 @@ function settleUpright() {
     state.tallSeen = null;
     return;
   }
+  fitStretched(design);
   if (design.upright === "auto") {
     const now = tallPlaces(design);
     const seen = state.tallSeen ?? {};
@@ -580,6 +582,7 @@ function settleUpright() {
       say("The upright screen is yours now. It no longer follows the sideways one.");
     } else {
       arrangeUpright(design);
+      fitStretched(design);
     }
   }
   state.tallSeen = tallPlaces(design);
@@ -1049,10 +1052,12 @@ function panelColours() {
       : null,
     group(...roles.map(([role]) => roleColour(role))),
   ].filter(Boolean));
-  const cover = toggle(state.theme.cover_flow === "dark", (dark) => {
+  const coverReads = textReadsInCoverFlow(state.theme);
+  const cover = toggle(state.theme.cover_flow === "dark" || !coverReads, (dark) => {
     state.theme.cover_flow = dark ? "dark" : "theme";
     changed();
   });
+  cover.disabled = !coverReads;
   const accents = el("div", { class: "legacy" });
   buildAccents(accents, state.theme, {
     changed: () => changed(),
@@ -1067,7 +1072,9 @@ function panelColours() {
     el("p", { class: "hint" }, "Changing Background or Text above sets the colours made from them again; changing Accent sets the highlighted row's."),
     ...groups.flat(),
     el("h3", {}, "Cover Flow"),
-    group(field("Keep it dark", cover, "Good for light themes: the album wall stays on black")),
+    group(field("Keep it dark", cover, coverReads
+      ? "The album wall is always black; on, its titles use the player's own light text instead of yours"
+      : "Your text is too dark to read on the black album wall, so the player always uses its own light text there")),
     el("h3", {}, "Accent choices"),
     el("p", { class: "hint" }, "Colours people can pick for the selected row under Settings, Display, Accent color. Leave the list empty to keep yours."),
     accents);
